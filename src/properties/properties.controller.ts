@@ -34,7 +34,7 @@ export class PropertiesController {
   getAllProperties(
     @Query(ValidationPipe) filterDto: GetPropertiesFilterDto,
   ): Promise<Property[]> {
-    this.logger.verbose(`Filters: ${JSON.stringify(filterDto)}`);
+    this.logger.verbose(`Filtres: ${JSON.stringify(filterDto)}`);
     return this.propertiesService.getAllProperties(filterDto);
   }
 
@@ -64,7 +64,7 @@ export class PropertiesController {
     @Query(ValidationPipe) filterDto: GetPropertiesFilterDto,
     @GetUser() user: User,
   ): Promise<Property[]> {
-    this.logger.verbose(`Filters: ${JSON.stringify(filterDto)}`);
+    this.logger.verbose(`Filtres: ${JSON.stringify(filterDto)}`);
     return this.propertiesService.getProperties(filterDto, user);
   }
 

@@ -34,7 +34,7 @@ export class PropertyRepository extends Repository<Property> {
       return properties;
     } catch (error) {
       this.logger.error(
-        `Impossible de trouver d'hébergements pour cet utilisateur. Filters: ${JSON.stringify(
+        `Impossible de trouver d'hébergements pour cet utilisateur. Filtres: ${JSON.stringify(
           filterDto,
         )}`,
         error.stack,
@@ -46,18 +46,24 @@ export class PropertyRepository extends Repository<Property> {
   async getAllProperties(
     filterDto: GetPropertiesFilterDto,
   ): Promise<Property[]> {
-    const { category, search } = filterDto;
+    const { category, search, peoples } = filterDto;
     const query = this.createQueryBuilder('property');
 
     if (category) {
-      query.andWhere('property.category = :category', { category });
+      query.andWhere('property.category IN (:...category)', { category });
     }
 
     if (search) {
       query.andWhere(
-        '(property.title LIKE :search OR property.description LIKE :search OR property.category LIKE :search OR property.location LIKE :search OR property.options LIKE :search)',
-        { search: `%${search}%` },
+        '(LOWER(property.title) LIKE :search OR LOWER(property.description) LIKE :search OR LOWER(property.category) LIKE :search OR LOWER(property.location) LIKE :search OR LOWER(property.options) LIKE :search)',
+        { search: `%${search.toLowerCase()}%` },
       );
+    }
+
+    if (peoples) {
+      query.andWhere('(property.peoples = :peoples)', {
+        peoples: `${peoples}`,
+      });
     }
 
     try {
@@ -65,7 +71,7 @@ export class PropertyRepository extends Repository<Property> {
       return properties;
     } catch (error) {
       this.logger.error(
-        `Impossible de trouver d'hébergements. Filters: ${JSON.stringify(
+        `Impossible de trouver d'hébergements. Filtres: ${JSON.stringify(
           filterDto,
         )}`,
         error.stack,
