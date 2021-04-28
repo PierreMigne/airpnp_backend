@@ -49,7 +49,7 @@ export class Property extends BaseEntity {
   @Column()
   photos: string;
 
-  @ManyToOne((type) => User, (user) => user.properties, { eager: false })
+  @ManyToOne(() => User, (user) => user.properties, { eager: false })
   user: User;
 
   @Column()

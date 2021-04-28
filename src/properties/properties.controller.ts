@@ -60,12 +60,8 @@ export class PropertiesController {
 
   @Get()
   @UseGuards(AuthGuard())
-  getProperties(
-    @Query(ValidationPipe) filterDto: GetPropertiesFilterDto,
-    @GetUser() user: User,
-  ): Promise<Property[]> {
-    this.logger.verbose(`Filtres: ${JSON.stringify(filterDto)}`);
-    return this.propertiesService.getProperties(filterDto, user);
+  getPropertiesByUser(@GetUser() user: User): Promise<Property[]> {
+    return this.propertiesService.getPropertiesByUser(user);
   }
 
   @Get(':id')

@@ -21,11 +21,16 @@ export class PropertiesService {
     return this.propertyRepository.createProperty(createPropertyDto, user);
   }
 
-  async getProperties(
-    filterDto: GetPropertiesFilterDto,
-    user: User,
-  ): Promise<Property[]> {
-    return this.propertyRepository.getProperties(filterDto, user);
+  async getPropertiesByUser(user: User): Promise<Property[]> {
+    const found = await this.propertyRepository.find({
+      where: { userId: user.id },
+    });
+    if (!found) {
+      throw new NotFoundException(
+        `Cet utilisateur n'a pas d'hébergements ou n'existe pas.`,
+      );
+    }
+    return found;
   }
   async getAllProperties(
     filterDto: GetPropertiesFilterDto,
@@ -34,9 +39,7 @@ export class PropertiesService {
   }
 
   async getPropertyById(id: number): Promise<Property> {
-    const found = await this.propertyRepository.findOne({
-      where: { id },
-    });
+    const found = await this.propertyRepository.findOne(id);
     if (!found) {
       throw new NotFoundException(
         `L'hébergement avec l'ID ${id} n'existe pas !`,

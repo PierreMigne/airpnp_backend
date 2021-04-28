@@ -9,61 +9,27 @@ import { User } from '../auth/entities/user.entity';
 export class PropertyRepository extends Repository<Property> {
   private logger = new Logger('PropertyRepository');
 
-  async getProperties(
-    filterDto: GetPropertiesFilterDto,
-    user: User,
-  ): Promise<Property[]> {
-    const { category, search } = filterDto;
-    const query = this.createQueryBuilder('property');
-
-    query.where('property.userId = :userId', { userId: user.id });
-
-    if (category) {
-      query.andWhere('property.category = :category', { category });
-    }
-
-    if (search) {
-      query.andWhere(
-        '(property.title LIKE :search OR property.description LIKE :search OR property.category LIKE :search OR property.location LIKE :search OR property.options LIKE :search)',
-        { search: `%${search}%` },
-      );
-    }
-
-    try {
-      const properties = await query.getMany();
-      return properties;
-    } catch (error) {
-      this.logger.error(
-        `Impossible de trouver d'hébergements pour cet utilisateur. Filtres: ${JSON.stringify(
-          filterDto,
-        )}`,
-        error.stack,
-      );
-      throw new InternalServerErrorException();
-    }
-  }
-
   async getAllProperties(
     filterDto: GetPropertiesFilterDto,
   ): Promise<Property[]> {
-    const { category, search, peoples } = filterDto;
+    const { category, location, peoples, options } = filterDto;
     const query = this.createQueryBuilder('property');
 
     if (category) {
       query.andWhere('property.category IN (:...category)', { category });
     }
-
-    if (search) {
-      query.andWhere(
-        '(LOWER(property.title) LIKE :search OR LOWER(property.description) LIKE :search OR LOWER(property.category) LIKE :search OR LOWER(property.location) LIKE :search OR LOWER(property.options) LIKE :search)',
-        { search: `%${search.toLowerCase()}%` },
-      );
-    }
-
-    if (peoples) {
-      query.andWhere('(property.peoples = :peoples)', {
-        peoples: `${peoples}`,
+    if (location) {
+      query.andWhere('property.location ILIKE (:location)', {
+        location: `%${location}%`,
       });
+    }
+    if (options) {
+      options.forEach((option) => {
+        query.andWhere("property.options ILIKE ('%" + option + "%')");
+      });
+    }
+    if (peoples) {
+      query.andWhere('(property.peoples = :peoples)', { peoples });
     }
 
     try {

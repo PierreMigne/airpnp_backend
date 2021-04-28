@@ -6,8 +6,11 @@ export class GetPropertiesFilterDto {
   category: PropertyCategories;
 
   @IsOptional()
-  search: string;
+  location: string;
 
   @IsOptional()
   peoples: number;
+
+  @IsOptional()
+  options: any;
 }
