@@ -16,7 +16,6 @@ import {
 } from '@nestjs/common';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
-import { UpdatePropertyDto } from './dto/update-property.dto';
 import { Property } from './entities/property.entity';
 import { PropertyCategoriesValidationPipe } from './pipes/property-categories-validation.pipe';
 import { PropertyCategories } from './property-categories.enum';
@@ -84,16 +83,16 @@ export class PropertiesController {
     return this.propertiesService.updatePropertyCategories(+id, category, user);
   }
 
-  // @Put(':id')
-  // @UseGuards(AuthGuard())
-  // updateProperty(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @Body() createPropertyDto: CreatePropertyDto,
-  //   @GetUser() user: User,
-  // ): Promise<Property> {
-  //   this.logger.verbose(`Data: ${JSON.stringify(createPropertyDto)}`);
-  //   return this.propertiesService.updateProperty(+id, createPropertyDto);
-  // }
+  @Put(':id')
+  @UseGuards(AuthGuard())
+  updateProperty(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() createPropertyDto: CreatePropertyDto,
+    @GetUser() user: User,
+  ): Promise<Property> {
+    this.logger.verbose(`Data: ${JSON.stringify(createPropertyDto)}`);
+    return this.propertiesService.updateProperty(+id, user, createPropertyDto);
+  }
 
   @Delete(':id')
   @UseGuards(AuthGuard())

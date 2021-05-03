@@ -70,20 +70,21 @@ export class PropertiesService {
     return property;
   }
 
-  // async updateProperty(
-  //   id: number,
-  //   createPropertyDto: CreatePropertyDto,
-  // ): Promise<any> {
-  //   //const property = await this.getPropertyById(id);
-  //   const property = await this.propertyRepository.update(
-  //     id,
-  //     createPropertyDto,
-  //   );
-  //   //console.log(find);
-
-  //   // await find.save();
-  //   return property;
-  // }
+  async updateProperty(
+    id: number,
+    user: User,
+    createPropertyDto: CreatePropertyDto,
+  ): Promise<any> {
+    const updatedProperty = await this.propertyRepository.update(
+      { id, userId: user.id },
+      createPropertyDto,
+    );
+    if (updatedProperty.affected === 0) {
+      throw new NotFoundException(
+        `L'hébergement avec l'ID ${id} n'existe pas !`,
+      );
+    }
+  }
 
   async deleteProperty(id: number, user: User): Promise<void> {
     const result = await this.propertyRepository.delete({
