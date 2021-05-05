@@ -72,6 +72,7 @@ export class PropertiesController {
     return this.propertiesService.getPropertyByIdAndUser(+id, user);
   }
 
+  // NOT USEFUL FOR NOW. DELETE ?
   @Patch(':id/category')
   @UseGuards(AuthGuard())
   updatePropertyCategory(
@@ -99,7 +100,7 @@ export class PropertiesController {
   remove(
     @Param('id', ParseIntPipe) id: number,
     @GetUser() user: User,
-  ): Promise<void> {
+  ): Promise<Property[]> {
     return this.propertiesService.deleteProperty(+id, user);
   }
 }

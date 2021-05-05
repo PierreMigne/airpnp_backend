@@ -59,6 +59,7 @@ export class PropertiesService {
     return found;
   }
 
+  // a supprimer ?
   async updatePropertyCategories(
     id: number,
     category: PropertyCategories,
@@ -86,7 +87,7 @@ export class PropertiesService {
     }
   }
 
-  async deleteProperty(id: number, user: User): Promise<void> {
+  async deleteProperty(id: number, user: User): Promise<Property[]> {
     const result = await this.propertyRepository.delete({
       id,
       userId: user.id,
@@ -97,5 +98,16 @@ export class PropertiesService {
         `L'hébergement avec l'ID ${id} n'existe pas !`,
       );
     }
+
+    const found = await this.propertyRepository.find({
+      where: { userId: user.id },
+    });
+
+    if (!found) {
+      throw new NotFoundException(
+        `Cet utilisateur n'a pas d'hébergements ou n'existe pas.`,
+      );
+    }
+    return found;
   }
 }
