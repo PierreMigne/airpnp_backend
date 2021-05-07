@@ -28,6 +28,6 @@ export class CreatePropertyDto {
   @IsNotEmpty()
   price: number;
 
-  @IsNotEmpty()
-  photos: string;
+  // @IsNotEmpty()
+  // photos: string;
 }

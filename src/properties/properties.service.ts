@@ -24,6 +24,7 @@ export class PropertiesService {
   async getPropertiesByUser(user: User): Promise<Property[]> {
     const found = await this.propertyRepository.find({
       where: { userId: user.id },
+      relations: ['images'],
     });
     if (!found) {
       throw new NotFoundException(
@@ -32,14 +33,17 @@ export class PropertiesService {
     }
     return found;
   }
+
   async getAllProperties(
     filterDto: GetPropertiesFilterDto,
   ): Promise<Property[]> {
-    return this.propertyRepository.getAllProperties(filterDto);
+    return await this.propertyRepository.getAllProperties(filterDto);
   }
 
   async getPropertyById(id: number): Promise<Property> {
-    const found = await this.propertyRepository.findOne(id);
+    const found = await this.propertyRepository.findOne(id, {
+      relations: ['images'],
+    });
     if (!found) {
       throw new NotFoundException(
         `L'hébergement avec l'ID ${id} n'existe pas !`,
@@ -50,6 +54,7 @@ export class PropertiesService {
   async getPropertyByIdAndUser(id: number, user: User): Promise<Property> {
     const found = await this.propertyRepository.findOne({
       where: { id, userId: user.id },
+      relations: ['images'],
     });
     if (!found) {
       throw new NotFoundException(
@@ -85,6 +90,10 @@ export class PropertiesService {
         `L'hébergement avec l'ID ${id} n'existe pas !`,
       );
     }
+  }
+
+  async savePropertyFile(property): Promise<any> {
+    await this.propertyRepository.save(property);
   }
 
   async deleteProperty(id: number, user: User): Promise<Property[]> {

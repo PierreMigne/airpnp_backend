@@ -14,6 +14,7 @@ export class PropertyRepository extends Repository<Property> {
   ): Promise<Property[]> {
     const { category, location, peoples, options } = filterDto;
     const query = this.createQueryBuilder('property');
+    query.leftJoinAndSelect('property.images', 'image');
 
     if (category) {
       query.andWhere('property.category IN (:...category)', { category });
@@ -60,7 +61,6 @@ export class PropertyRepository extends Repository<Property> {
       description,
       options,
       price,
-      photos,
     } = createPropertyDto;
 
     const property = new Property();
@@ -73,7 +73,6 @@ export class PropertyRepository extends Repository<Property> {
     property.description = description;
     property.options = options;
     property.price = price;
-    property.photos = photos;
     property.isVisible = false;
     property.createdAt = new Date();
     property.user = user;

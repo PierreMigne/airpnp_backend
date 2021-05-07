@@ -3,10 +3,12 @@ import {
   Column,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { PropertyCategories } from '../property-categories.enum';
 import { User } from '../../auth/entities/user.entity';
+import { Image } from '../../images/entities/images.entity';
 
 @Entity()
 export class Property extends BaseEntity {
@@ -46,8 +48,10 @@ export class Property extends BaseEntity {
   @Column()
   isVisible: boolean;
 
-  @Column()
-  photos: string;
+  @OneToMany(() => Image, (image) => image.property, {
+    cascade: ['insert', 'update'],
+  })
+  images: Image[];
 
   @ManyToOne(() => User, (user) => user.properties, { eager: false })
   user: User;
