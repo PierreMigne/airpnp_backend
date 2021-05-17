@@ -49,7 +49,8 @@ export class Property extends BaseEntity {
   isVisible: boolean;
 
   @OneToMany(() => Image, (image) => image.property, {
-    cascade: ['insert', 'update'],
+    eager: true,
+    cascade: true,
   })
   images: Image[];
 

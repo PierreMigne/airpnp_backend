@@ -14,7 +14,8 @@ export class PropertyRepository extends Repository<Property> {
   ): Promise<Property[]> {
     const { category, location, peoples, options } = filterDto;
     const query = this.createQueryBuilder('property');
-    query.leftJoinAndSelect('property.images', 'image');
+    query.leftJoinAndSelect('property.images', 'images');
+    query.orderBy('images.id', 'ASC');
 
     if (category) {
       query.andWhere('property.category IN (:...category)', { category });

@@ -12,12 +12,15 @@ import { AuthSignUpDto } from './dto/auth-signUp.dto';
 import { User } from './entities/user.entity';
 import { EditUserDto } from './dto/editUser.dto';
 import { EditPasswordDto } from './dto/editPassword.dto.';
+import { ImageRepository } from '../images/images.repository';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(UserRepository)
     private userRepository: UserRepository,
+    @InjectRepository(ImageRepository)
+    private imageRepository: ImageRepository,
     private jwtService: JwtService,
   ) {}
 
@@ -51,10 +54,43 @@ export class AuthService {
   async updateUser(user: User, editUserDto: EditUserDto): Promise<User> {
     return await this.userRepository.editUser(editUserDto, user);
   }
+
+  async saveUserFile(user): Promise<any> {
+    await this.userRepository.save(user);
+  }
+  async deleteUserFile(userId): Promise<any> {
+    await this.imageRepository.delete(userId);
+  }
+
   async editPassword(
     user: User,
     editPasswordDto: EditPasswordDto,
   ): Promise<User> {
     return await this.userRepository.editPassword(editPasswordDto, user);
   }
+
+  // async deleteUser(id: number, user: User): Promise<User[]> {
+  //   const result = await this.userRepository.delete({
+  //     id,
+  //     // userId: user.id,
+  //   });
+
+  //   if (result.affected === 0) {
+  //     throw new NotFoundException(
+  //       `L'utilisateur avec l'ID ${id} n'existe pas !`,
+  //     );
+  //   }
+
+  //   const found = await this.userRepository.find({
+  //     where: { userId: user.id },
+  //     relations: ['image'],
+  //   });
+
+  //   if (!found) {
+  //     throw new NotFoundException(
+  //       `Cet utilisateur n'a pas d'hébergements ou n'existe pas.`,
+  //     );
+  //   }
+  //   return found;
+  // }
 }

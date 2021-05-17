@@ -15,6 +15,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  Res,
 } from '@nestjs/common';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -30,7 +31,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { PropertyRepository } from './property.repository';
 import { Image } from 'src/images/entities/images.entity';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, rmdirSync } from 'fs';
 
 @Controller('properties')
 export class PropertiesController {
@@ -89,10 +90,10 @@ export class PropertiesController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          const propertiesId = req.params.id;
-          const path = `C:/Users/pierr/Desktop/DEV/Nestjs/airpnp/uploads`;
+          const propertyId = req.params.id;
+          const path = './uploads/properties/' + propertyId;
           if (!existsSync(path)) {
-            mkdirSync(path);
+            mkdirSync(path, { recursive: true });
           }
           return cb(null, path);
         },
@@ -108,7 +109,7 @@ export class PropertiesController {
   )
   async addPropertiesFile(
     @GetUser() user: User,
-    @Param('id') id: string,
+    @Param('id') id: number,
     @UploadedFile() file: Express.Multer.File,
   ) {
     const property = await this.propertyRepository.findOne(
@@ -117,15 +118,24 @@ export class PropertiesController {
     );
     const image = new Image();
     image.property = property;
-    image.propertyId = property.id;
+    image.user = null;
     image.file = file.filename;
     property.images.push(image);
-    // this.propertiesService.updateProperty(+id, user, property);
+
     this.propertiesService.savePropertyFile(property);
     return {
       response: 'success',
       image: file.filename,
     };
+  }
+
+  @Get('uploads/:id/:imgpath')
+  seeUploadedFile(
+    @Param('imgpath') image,
+    @Res() res,
+    @Param('id') id: number,
+  ) {
+    return res.sendFile(image, { root: './uploads/properties/' + id });
   }
 
   // NOT USEFUL FOR NOW. DELETE ?
@@ -157,6 +167,8 @@ export class PropertiesController {
     @Param('id', ParseIntPipe) id: number,
     @GetUser() user: User,
   ): Promise<Property[]> {
+    const path = './uploads/properties/' + id;
+    rmdirSync(path, { recursive: true });
     return this.propertiesService.deleteProperty(+id, user);
   }
 }

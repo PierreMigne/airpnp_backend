@@ -110,6 +110,7 @@ export class PropertiesService {
 
     const found = await this.propertyRepository.find({
       where: { userId: user.id },
+      relations: ['images'],
     });
 
     if (!found) {

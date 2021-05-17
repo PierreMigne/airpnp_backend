@@ -2,12 +2,15 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Property } from '../../properties/entities/property.entity';
+import { Image } from '../../images/entities/images.entity';
 
 @Entity()
 @Unique(['email'])
@@ -35,6 +38,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Property, (property) => property.user, { eager: true })
   properties: Property[];
+
+  @OneToOne(() => Image, (image) => image.user, { eager: true, cascade: true })
+  image: Image;
 
   async validatePassword(password: string): Promise<boolean> {
     const hash = await bcrypt.hash(password, this.salt);
