@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { UserRepository } from './user.repository';
 import { ImageRepository } from '../images/images.repository';
+import { FavoriteRepository } from '../favorites/favorties.repository';
 
 @Module({
   imports: [
@@ -15,7 +16,11 @@ import { ImageRepository } from '../images/images.repository';
       secret: 'Secret!KeyFor@JwTModule.',
       signOptions: { expiresIn: 86400 }, // 86400 => 24 hours
     }),
-    TypeOrmModule.forFeature([UserRepository, ImageRepository]),
+    TypeOrmModule.forFeature([
+      UserRepository,
+      ImageRepository,
+      FavoriteRepository,
+    ]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

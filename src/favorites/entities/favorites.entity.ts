@@ -2,32 +2,27 @@ import { Property } from 'src/properties/entities/property.entity';
 import { User } from '../../auth/entities/user.entity';
 import {
   BaseEntity,
-  Column,
   Entity,
-  JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity()
-export class Image extends BaseEntity {
+@Unique(['property', 'user'])
+export class Favorite extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  file: string | null;
-
-  @ManyToOne(() => Property, (property) => property.images, {
+  @ManyToOne(() => Property, (property) => property.favorites, {
     eager: false,
     onDelete: 'CASCADE',
   })
-  property: Property | null;
+  property: Property;
 
-  @OneToOne(() => User, (user) => user.image, {
+  @ManyToOne(() => User, (user) => user.favorites, {
     eager: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
-  user: User | null;
+  user: User;
 }

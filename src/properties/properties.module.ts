@@ -5,10 +5,15 @@ import { PropertyRepository } from './property.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import { ImageRepository } from '../images/images.repository';
+import { FavoriteRepository } from '../favorites/favorties.repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PropertyRepository, ImageRepository]),
+    TypeOrmModule.forFeature([
+      PropertyRepository,
+      ImageRepository,
+      FavoriteRepository,
+    ]),
     AuthModule,
   ],
   controllers: [PropertiesController],

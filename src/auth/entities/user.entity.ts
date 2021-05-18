@@ -2,7 +2,6 @@ import {
   BaseEntity,
   Column,
   Entity,
-  JoinColumn,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -11,6 +10,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { Property } from '../../properties/entities/property.entity';
 import { Image } from '../../images/entities/images.entity';
+import { Favorite } from 'src/favorites/entities/favorites.entity';
 
 @Entity()
 @Unique(['email'])
@@ -41,6 +41,9 @@ export class User extends BaseEntity {
 
   @OneToOne(() => Image, (image) => image.user, { eager: true, cascade: true })
   image: Image;
+
+  @OneToMany(() => Favorite, (favorite) => favorite.user, { eager: true })
+  favorites: Favorite[];
 
   async validatePassword(password: string): Promise<boolean> {
     const hash = await bcrypt.hash(password, this.salt);

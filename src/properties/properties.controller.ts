@@ -32,6 +32,7 @@ import { extname } from 'path';
 import { PropertyRepository } from './property.repository';
 import { Image } from 'src/images/entities/images.entity';
 import { existsSync, mkdirSync, rmdirSync } from 'fs';
+import { Favorite } from '../favorites/entities/favorites.entity';
 
 @Controller('properties')
 export class PropertiesController {
@@ -82,6 +83,15 @@ export class PropertiesController {
     @GetUser() user: User,
   ): Promise<Property> {
     return this.propertiesService.getPropertyByIdAndUser(+id, user);
+  }
+
+  @Post(':propertyId/favorite')
+  @UseGuards(AuthGuard())
+  savePropertyInFavorite(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @GetUser() user: User,
+  ): Promise<Favorite> {
+    return this.propertiesService.savePropertyInFavorite(propertyId, user);
   }
 
   @Post(':id/uploads')

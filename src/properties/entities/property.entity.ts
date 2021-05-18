@@ -9,6 +9,7 @@ import {
 import { PropertyCategories } from '../property-categories.enum';
 import { User } from '../../auth/entities/user.entity';
 import { Image } from '../../images/entities/images.entity';
+import { Favorite } from 'src/favorites/entities/favorites.entity';
 
 @Entity()
 export class Property extends BaseEntity {
@@ -56,6 +57,9 @@ export class Property extends BaseEntity {
 
   @ManyToOne(() => User, (user) => user.properties, { eager: false })
   user: User;
+
+  @OneToMany(() => Favorite, (favorite) => favorite.property, { eager: true })
+  favorites: Favorite[];
 
   @Column()
   userId: number;

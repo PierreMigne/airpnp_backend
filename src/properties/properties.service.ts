@@ -6,12 +6,16 @@ import { Property } from './entities/property.entity';
 import { PropertyCategories } from './property-categories.enum';
 import { PropertyRepository } from './property.repository';
 import { User } from '../auth/entities/user.entity';
+import { FavoriteRepository } from '../favorites/favorties.repository';
+import { Favorite } from 'src/favorites/entities/favorites.entity';
 
 @Injectable()
 export class PropertiesService {
   constructor(
     @InjectRepository(PropertyRepository)
     private propertyRepository: PropertyRepository,
+    @InjectRepository(FavoriteRepository)
+    private favoriteRepository: FavoriteRepository,
   ) {}
 
   async createProperty(
@@ -119,5 +123,15 @@ export class PropertiesService {
       );
     }
     return found;
+  }
+
+  async savePropertyInFavorite(
+    propertyId: number,
+    user: User,
+  ): Promise<Favorite> {
+    return await this.favoriteRepository.save({
+      property: { id: propertyId },
+      user,
+    });
   }
 }
