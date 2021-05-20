@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -21,7 +20,6 @@ import { GetUser } from './get-user.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { EditUserDto } from './dto/editUser.dto';
 import { EditPasswordDto } from './dto/editPassword.dto.';
-import { UserRepository } from './user.repository';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { existsSync, mkdirSync, rmdirSync } from 'fs';
@@ -30,10 +28,7 @@ import { extname } from 'path';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private authService: AuthService,
-    private userRepository: UserRepository,
-  ) {}
+  constructor(private authService: AuthService) {}
 
   @Post('signup')
   signUp(@Body(ValidationPipe) authSignUpDto: AuthSignUpDto): Promise<void> {
@@ -99,7 +94,7 @@ export class AuthController {
   )
   async addUserFile(
     @GetUser() user: User,
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: Express.Multer.File,
   ) {
     // if user already have an image, we delete this because type = Image and not Image[]
@@ -123,7 +118,7 @@ export class AuthController {
   seeUploadedFile(
     @Param('imgpath') image,
     @Res() res,
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
   ) {
     return res.sendFile(image, { root: './uploads/profile/' + id });
   }

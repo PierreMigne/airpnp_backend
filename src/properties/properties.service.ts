@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { GetPropertiesFilterDto } from './dto/get-properties-filter.dto';
@@ -55,6 +59,7 @@ export class PropertiesService {
     }
     return found;
   }
+
   async getPropertyByIdAndUser(id: number, user: User): Promise<Property> {
     const found = await this.propertyRepository.findOne({
       where: { id, userId: user.id },
@@ -129,9 +134,56 @@ export class PropertiesService {
     propertyId: number,
     user: User,
   ): Promise<Favorite> {
-    return await this.favoriteRepository.save({
-      property: { id: propertyId },
-      user,
+    try {
+      return await this.favoriteRepository.save({
+        property: { id: propertyId },
+        user,
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async getFavorites(user: User): Promise<Favorite[]> {
+    const found = await this.favoriteRepository.find({
+      where: { user: user.id },
+      relations: ['property'],
+      // relations: ['property', 'user'],
     });
+    if (!found) {
+      throw new NotFoundException(`Vous n'avez pas d'hébergement en favoris !`);
+    }
+    return found;
+  }
+
+  async deleteFavoriteByPropertyIdAndUser(
+    propertyId: number,
+    user: User,
+  ): Promise<any> {
+    const result = await this.favoriteRepository.delete({
+      user: { id: user.id },
+      property: { id: propertyId },
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException(`Le favoris avec l'ID 'existe pas !`);
+    }
+
+    const found = await this.getFavorites(user);
+    return found;
+  }
+
+  async deleteFavorites(id: number, user: User): Promise<any> {
+    const result = await this.favoriteRepository.delete({
+      id,
+      user: { id: user.id },
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException(`Le favoris avec l'ID ${id} n'existe pas !`);
+    }
+
+    const found = await this.getFavorites(user);
+    return found;
   }
 }

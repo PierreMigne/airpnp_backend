@@ -76,6 +76,12 @@ export class PropertiesController {
     return this.propertiesService.getPropertiesByUser(user);
   }
 
+  @Get('favorites')
+  @UseGuards(AuthGuard())
+  getFavorites(@GetUser() user: User): Promise<Favorite[]> {
+    return this.propertiesService.getFavorites(user);
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard())
   getPropertyByIdAndUser(
@@ -157,7 +163,7 @@ export class PropertiesController {
     category: PropertyCategories,
     @GetUser() user: User,
   ): Promise<any> {
-    return this.propertiesService.updatePropertyCategories(+id, category, user);
+    return this.propertiesService.updatePropertyCategories(id, category, user);
   }
 
   @Put(':id')
@@ -168,7 +174,7 @@ export class PropertiesController {
     @GetUser() user: User,
   ): Promise<Property> {
     this.logger.verbose(`Data: ${JSON.stringify(createPropertyDto)}`);
-    return this.propertiesService.updateProperty(+id, user, createPropertyDto);
+    return this.propertiesService.updateProperty(id, user, createPropertyDto);
   }
 
   @Delete(':id')
@@ -179,6 +185,24 @@ export class PropertiesController {
   ): Promise<Property[]> {
     const path = './uploads/properties/' + id;
     rmdirSync(path, { recursive: true });
-    return this.propertiesService.deleteProperty(+id, user);
+    return this.propertiesService.deleteProperty(id, user);
+  }
+
+  @Delete('favorites/:id')
+  @UseGuards(AuthGuard())
+  removeFavorite(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: User,
+  ): Promise<Favorite[]> {
+    return this.propertiesService.deleteFavorites(id, user);
+  }
+
+  @Delete('favorite/:id')
+  @UseGuards(AuthGuard())
+  removeFavoriteByIdAndUser(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: User,
+  ): Promise<Favorite[]> {
+    return this.propertiesService.deleteFavoriteByPropertyIdAndUser(id, user);
   }
 }
