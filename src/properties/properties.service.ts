@@ -12,6 +12,9 @@ import { PropertyRepository } from './property.repository';
 import { User } from '../auth/entities/user.entity';
 import { FavoriteRepository } from '../favorites/favorties.repository';
 import { Favorite } from 'src/favorites/entities/favorites.entity';
+import { Booking } from '../booking/entities/bookings.entity';
+import { CreateBookingDto } from 'src/booking/dto/create-booking.dto';
+import { BookingRepository } from '../booking/bookings.repository';
 
 @Injectable()
 export class PropertiesService {
@@ -20,6 +23,8 @@ export class PropertiesService {
     private propertyRepository: PropertyRepository,
     @InjectRepository(FavoriteRepository)
     private favoriteRepository: FavoriteRepository,
+    @InjectRepository(BookingRepository)
+    private bookingRepository: BookingRepository,
   ) {}
 
   async createProperty(
@@ -142,6 +147,57 @@ export class PropertiesService {
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  // async createBooking(
+  //   propertyId: number,
+  //   user: User,
+  //   createBookingDto: CreateBookingDto,
+  // ): Promise<Booking> {
+  //   try {
+  //     return await this.bookingRepository.save({
+  //       property: { id: propertyId },
+  //       user,
+  //       createBookingDto,
+  //     });
+  //   } catch (error) {
+  //     throw new InternalServerErrorException(error);
+  //   }
+  // }
+  async createBooking(
+    propertyId: number,
+    user: User,
+    createBookingDto: CreateBookingDto,
+  ): Promise<Booking> {
+    return await this.bookingRepository.createBooking(
+      createBookingDto,
+      user,
+      propertyId,
+    );
+  }
+
+  async getBookings(user: User): Promise<Booking[]> {
+    const found = await this.bookingRepository.find({
+      where: { user: user.id },
+      relations: ['property'],
+      // relations: ['property', 'user'],
+    });
+    if (!found) {
+      throw new NotFoundException(`Vous n'avez pas de réservation !`);
+    }
+    return found;
+  }
+
+  async getBookingsById(propertyId: number): Promise<Booking[]> {
+    const found = await this.bookingRepository.find({
+      where: { propertyId: propertyId },
+      relations: ['property'],
+      // relations: ['property', 'user'],
+    });
+    if (!found) {
+      throw new NotFoundException(`Vous n'avez pas de réservation !`);
+    }
+    return found;
   }
 
   async getFavorites(user: User): Promise<Favorite[]> {

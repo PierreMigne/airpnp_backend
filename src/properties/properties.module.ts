@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import { ImageRepository } from '../images/images.repository';
 import { FavoriteRepository } from '../favorites/favorties.repository';
+import { BookingRepository } from '../booking/bookings.repository';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { FavoriteRepository } from '../favorites/favorties.repository';
       PropertyRepository,
       ImageRepository,
       FavoriteRepository,
+      BookingRepository,
     ]),
     AuthModule,
   ],

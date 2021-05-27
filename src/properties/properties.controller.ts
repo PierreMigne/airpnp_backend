@@ -33,6 +33,8 @@ import { PropertyRepository } from './property.repository';
 import { Image } from 'src/images/entities/images.entity';
 import { existsSync, mkdirSync, rmdirSync } from 'fs';
 import { Favorite } from '../favorites/entities/favorites.entity';
+import { Booking } from '../booking/entities/bookings.entity';
+import { CreateBookingDto } from 'src/booking/dto/create-booking.dto';
 
 @Controller('properties')
 export class PropertiesController {
@@ -82,6 +84,21 @@ export class PropertiesController {
     return this.propertiesService.getFavorites(user);
   }
 
+  @Get('bookings')
+  @UseGuards(AuthGuard())
+  getBookings(@GetUser() user: User): Promise<Booking[]> {
+    return this.propertiesService.getBookings(user);
+  }
+
+  @Get('bookings/:id')
+  @UseGuards(AuthGuard())
+  getBookingsById(
+    @GetUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Booking[]> {
+    return this.propertiesService.getBookingsById(id);
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard())
   getPropertyByIdAndUser(
@@ -98,6 +115,20 @@ export class PropertiesController {
     @GetUser() user: User,
   ): Promise<Favorite> {
     return this.propertiesService.savePropertyInFavorite(propertyId, user);
+  }
+
+  @Post(':propertyId/booking')
+  @UseGuards(AuthGuard())
+  createBooking(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() createBookingDto: CreateBookingDto,
+    @GetUser() user: User,
+  ): Promise<Booking> {
+    return this.propertiesService.createBooking(
+      propertyId,
+      user,
+      createBookingDto,
+    );
   }
 
   @Post(':id/uploads')

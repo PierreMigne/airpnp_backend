@@ -8,6 +8,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { UserRepository } from './user.repository';
 import { ImageRepository } from '../images/images.repository';
 import { FavoriteRepository } from '../favorites/favorties.repository';
+import { BookingRepository } from '../booking/bookings.repository';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { FavoriteRepository } from '../favorites/favorties.repository';
       UserRepository,
       ImageRepository,
       FavoriteRepository,
+      BookingRepository,
     ]),
   ],
   controllers: [AuthController],
