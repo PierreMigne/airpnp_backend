@@ -13,6 +13,8 @@ import { User } from './entities/user.entity';
 import { EditUserDto } from './dto/editUser.dto';
 import { EditPasswordDto } from './dto/editPassword.dto.';
 import { ImageRepository } from '../images/images.repository';
+import { MailService } from '../mail/mail.service';
+import { ResetPasswordDto } from './dto/resetPassword.dto';
 
 @Injectable()
 export class AuthService {
@@ -22,9 +24,11 @@ export class AuthService {
     @InjectRepository(ImageRepository)
     private imageRepository: ImageRepository,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async signUp(authSignUpDto: AuthSignUpDto): Promise<void> {
+    await this.mailService.sendUserWelcome(authSignUpDto);
     return await this.userRepository.signUp(authSignUpDto);
   }
 
@@ -37,7 +41,6 @@ export class AuthService {
     if (!email) {
       throw new UnauthorizedException('Email ou mot de passe invalide.');
     }
-
     const payload: JwtPayload = { email };
     const accessToken = await this.jwtService.sign(payload);
     return { accessToken };
@@ -47,6 +50,14 @@ export class AuthService {
     const found = await this.userRepository.findOne({ id: user.id });
     if (!found) {
       throw new NotFoundException(`L'utilisateur ${user} n'existe pas !`);
+    }
+    return found;
+  }
+
+  async getUserByEmail(email: string): Promise<User> {
+    const found = await this.userRepository.findOne(email);
+    if (!found) {
+      throw new NotFoundException(`L'email ${email} n'existe pas !`);
     }
     return found;
   }
@@ -67,6 +78,25 @@ export class AuthService {
     editPasswordDto: EditPasswordDto,
   ): Promise<User> {
     return await this.userRepository.editPassword(editPasswordDto, user);
+  }
+
+  async forgotPassword(email: JwtPayload): Promise<{ accessToken: string }> {
+    if (!email) {
+      throw new NotFoundException("Cet email n'éxiste pas.");
+    }
+
+    const payload: JwtPayload = email;
+
+    const accessToken = await this.jwtService.sign(payload);
+    await this.mailService.sendUserForgotPassword(email.email, accessToken);
+    return { accessToken };
+  }
+
+  async resetPassword(
+    user: User,
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<User> {
+    return await this.userRepository.resetPassword(resetPasswordDto, user);
   }
 
   // async deleteUser(id: number, user: User): Promise<User[]> {

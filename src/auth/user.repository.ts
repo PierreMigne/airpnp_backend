@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { AuthSignUpDto } from './dto/auth-signUp.dto';
 import { EditUserDto } from './dto/editUser.dto';
 import { EditPasswordDto } from './dto/editPassword.dto.';
+import { ResetPasswordDto } from './dto/resetPassword.dto';
 import {
   ConflictException,
   InternalServerErrorException,
@@ -63,6 +64,18 @@ export class UserRepository extends Repository<User> {
     }
   }
 
+  async resetPassword(
+    resetPasswordDto: ResetPasswordDto,
+    user: User,
+  ): Promise<User> {
+    const { password } = resetPasswordDto;
+    const editedUser = await this.findOne({ id: user.id });
+    editedUser.salt = await bcrypt.genSalt();
+    editedUser.password = await this.hashPassword(password, editedUser.salt);
+    await editedUser.save();
+    return editedUser;
+  }
+
   async validateUserPassword(
     authCredentialsDto: AuthCredentialsDto,
   ): Promise<string> {
@@ -74,6 +87,18 @@ export class UserRepository extends Repository<User> {
       return null;
     }
   }
+
+  // async validateUserForgotPassword(
+  //   authCredentialsDto: AuthCredentialsDto,
+  // ): Promise<string> {
+  //   const { email, password } = authCredentialsDto;
+  //   const user = await this.findOne({ email });
+  //   if (user && (await user.validatePassword(password))) {
+  //     return user.email;
+  //   } else {
+  //     return null;
+  //   }
+  // }
 
   private async hashPassword(password: string, salt: string): Promise<string> {
     return bcrypt.hash(password, salt);

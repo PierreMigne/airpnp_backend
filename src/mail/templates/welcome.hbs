@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+        body a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            background-color: #1188E6;
+            padding: 10px 30px;
+            border-radius: 9999px;
+        }
+        .subTitle {
+            font-size: 18px;
+        }
+        span {
+            font-size: 20px;
+        }
+        .linkContainer {
+            margin: 10px 0;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Bonjour {{ name }},</h2>
+    <p class="subTitle">Bienvenue sur <span>Loc A'Part !</span></p>
+    <p>Vous pouvez dès à présent compléter votre profil en cliquant sur le lien ci dessous:</p>
+    <div class="linkContainer">
+        <a href="{{ url }}">Mon profil</a>
+    </div>
+    <div>
+        <p> Merci, <br>
+            L'équipe Loc A'Part
+        </p>
+    </div>
+</body>

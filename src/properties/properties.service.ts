@@ -149,38 +149,28 @@ export class PropertiesService {
     }
   }
 
-  // async createBooking(
-  //   propertyId: number,
-  //   user: User,
-  //   createBookingDto: CreateBookingDto,
-  // ): Promise<Booking> {
-  //   try {
-  //     return await this.bookingRepository.save({
-  //       property: { id: propertyId },
-  //       user,
-  //       createBookingDto,
-  //     });
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(error);
-  //   }
-  // }
   async createBooking(
     propertyId: number,
     user: User,
     createBookingDto: CreateBookingDto,
   ): Promise<Booking> {
-    return await this.bookingRepository.createBooking(
-      createBookingDto,
-      user,
-      propertyId,
-    );
+    try {
+      return await this.bookingRepository.createBooking(
+        createBookingDto,
+        user,
+        propertyId,
+      );
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   async getBookings(user: User): Promise<Booking[]> {
     const found = await this.bookingRepository.find({
       where: { user: user.id },
-      relations: ['property'],
+      // relations: ['property'],
       // relations: ['property', 'user'],
+      order: { createdAt: 'DESC' },
     });
     if (!found) {
       throw new NotFoundException(`Vous n'avez pas de réservation !`);

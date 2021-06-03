@@ -25,6 +25,8 @@ import { diskStorage } from 'multer';
 import { existsSync, mkdirSync, rmdirSync } from 'fs';
 import { Image } from 'src/images/entities/images.entity';
 import { extname } from 'path';
+import { JwtPayload } from './jwt-payload.interface';
+import { ResetPasswordDto } from './dto/resetPassword.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -121,6 +123,23 @@ export class AuthController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return res.sendFile(image, { root: './uploads/profile/' + id });
+  }
+
+  @Post('forgot')
+  forgotPassword(
+    @Body(ValidationPipe) email: JwtPayload,
+  ): Promise<{ accessToken: string }> {
+    const accessToken = this.authService.forgotPassword(email);
+    return accessToken;
+  }
+
+  @Put('profile/reset/password')
+  @UseGuards(AuthGuard())
+  resetPassword(
+    @Body(ValidationPipe) resetPasswordDto: ResetPasswordDto,
+    @GetUser() user: User,
+  ): Promise<User> {
+    return this.authService.resetPassword(user, resetPasswordDto);
   }
 
   // @Delete(':id')

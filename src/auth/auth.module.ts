@@ -9,12 +9,16 @@ import { UserRepository } from './user.repository';
 import { ImageRepository } from '../images/images.repository';
 import { FavoriteRepository } from '../favorites/favorties.repository';
 import { BookingRepository } from '../booking/bookings.repository';
+import { MailModule } from '../mail/mail.module';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: 'Secret!KeyFor@JwTModule.',
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: 86400 }, // 86400 => 24 hours
     }),
     TypeOrmModule.forFeature([
@@ -23,6 +27,7 @@ import { BookingRepository } from '../booking/bookings.repository';
       FavoriteRepository,
       BookingRepository,
     ]),
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
