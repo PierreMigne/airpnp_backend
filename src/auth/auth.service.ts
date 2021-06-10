@@ -15,6 +15,10 @@ import { EditPasswordDto } from './dto/editPassword.dto.';
 import { ImageRepository } from '../images/images.repository';
 import { MailService } from '../mail/mail.service';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
+import Stripe from 'stripe';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Injectable()
 export class AuthService {
@@ -26,6 +30,41 @@ export class AuthService {
     private jwtService: JwtService,
     private mailService: MailService,
   ) {}
+
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2020-08-27',
+    typescript: true,
+  });
+
+  account = this.stripe.accounts.create({
+    type: 'express',
+  });
+
+  createCustomer = async (email) => {
+    const params: Stripe.CustomerCreateParams = {
+      email: email,
+      name: '',
+      description: 'test customer',
+    };
+    const customer: Stripe.Customer = await this.stripe.customers.create(
+      params,
+    );
+    console.log(customer.id);
+    return customer.id;
+  };
+
+  createAccountLinks = async (customerId) => {
+    const id = customerId;
+    console.log(id);
+
+    const accountLinks = await this.stripe.accountLinks.create({
+      account: id,
+      refresh_url: 'http://localhost:4200/home',
+      return_url: 'http://localhost:4200/home',
+      type: 'account_onboarding',
+    });
+    console.log(accountLinks);
+  };
 
   async signUp(authSignUpDto: AuthSignUpDto): Promise<void> {
     await this.mailService.sendUserWelcome(authSignUpDto);
@@ -43,6 +82,8 @@ export class AuthService {
     }
     const payload: JwtPayload = { email };
     const accessToken = await this.jwtService.sign(payload);
+    // const stripeCustomerId = await this.createCustomer(email);
+    // this.createAccountLinks(stripeCustomerId);
     return { accessToken };
   }
 
@@ -52,6 +93,14 @@ export class AuthService {
       throw new NotFoundException(`L'utilisateur ${user} n'existe pas !`);
     }
     return found;
+  }
+
+  async isUserAdmin(user: User): Promise<boolean> {
+    const found = await this.userRepository.findOne({ id: user.id });
+    if (!found) {
+      throw new NotFoundException(`L'utilisateur ${user} n'existe pas !`);
+    }
+    return found.isAdmin;
   }
 
   async getUserByEmail(email: string): Promise<User> {

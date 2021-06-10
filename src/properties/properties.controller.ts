@@ -16,6 +16,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Res,
+  Req,
 } from '@nestjs/common';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -35,6 +36,7 @@ import { existsSync, mkdirSync, rmdirSync } from 'fs';
 import { Favorite } from '../favorites/entities/favorites.entity';
 import { Booking } from '../booking/entities/bookings.entity';
 import { CreateBookingDto } from 'src/booking/dto/create-booking.dto';
+import { IsVisiblePropertyDto } from './dto/isVisible-property.dto';
 
 @Controller('properties')
 export class PropertiesController {
@@ -45,16 +47,33 @@ export class PropertiesController {
   ) {}
 
   @Get('all')
-  getAllProperties(
+  getAllPropertiesVisibles(
     @Query(ValidationPipe) filterDto: GetPropertiesFilterDto,
   ): Promise<Property[]> {
     this.logger.verbose(`Filtres: ${JSON.stringify(filterDto)}`);
-    return this.propertiesService.getAllProperties(filterDto);
+    return this.propertiesService.getAllPropertiesVisibles(filterDto);
+  }
+
+  @Get('all/not-visibles')
+  getAllPropertiesNotVisibles(): Promise<Property[]> {
+    return this.propertiesService.getAllPropertiesNotVisibles();
+  }
+
+  @Get('all/not-visibles/count')
+  countAllPropertiesNotVisibles(): Promise<number> {
+    return this.propertiesService.countAllPropertiesNotVisibles();
   }
 
   @Get('all/:id')
   getPropertyById(@Param('id', ParseIntPipe) id: number): Promise<Property> {
-    return this.propertiesService.getPropertyById(+id);
+    return this.propertiesService.getPropertyById(id);
+  }
+
+  @Get('all/:id/not-visible')
+  getPropertyByIdNotVisible(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Property> {
+    return this.propertiesService.getPropertyByIdNotVisible(id);
   }
 
   /*
@@ -99,13 +118,26 @@ export class PropertiesController {
     return this.propertiesService.getBookingsById(id);
   }
 
-  @Get(':id')
+  @Get(':propertyId')
   @UseGuards(AuthGuard())
   getPropertyByIdAndUser(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
     @GetUser() user: User,
   ): Promise<Property> {
-    return this.propertiesService.getPropertyByIdAndUser(+id, user);
+    return this.propertiesService.getPropertyByIdAndUser(propertyId, user);
+  }
+
+  @Put(':propertyId/visible')
+  @UseGuards(AuthGuard())
+  updatePropertyVisibility(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() isVisibleDto: IsVisiblePropertyDto,
+    @GetUser() user: User,
+  ): Promise<any> {
+    return this.propertiesService.updatePropertyVisibility(
+      propertyId,
+      isVisibleDto,
+    );
   }
 
   @Post(':propertyId/favorite')
@@ -183,18 +215,6 @@ export class PropertiesController {
     @Param('id') id: number,
   ) {
     return res.sendFile(image, { root: './uploads/properties/' + id });
-  }
-
-  // NOT USEFUL FOR NOW. DELETE ?
-  @Patch(':id/category')
-  @UseGuards(AuthGuard())
-  updatePropertyCategory(
-    @Param('id', ParseIntPipe) id: number,
-    @Body('category', PropertyCategoriesValidationPipe)
-    category: PropertyCategories,
-    @GetUser() user: User,
-  ): Promise<any> {
-    return this.propertiesService.updatePropertyCategories(id, category, user);
   }
 
   @Put(':id')

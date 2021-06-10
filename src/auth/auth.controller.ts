@@ -50,6 +50,12 @@ export class AuthController {
     return this.authService.getUser(user);
   }
 
+  @Get('admin')
+  @UseGuards(AuthGuard())
+  isUserAdmin(@GetUser() user: User): Promise<boolean> {
+    return this.authService.isUserAdmin(user);
+  }
+
   @Put('profile/edit')
   @UseGuards(AuthGuard())
   editUser(

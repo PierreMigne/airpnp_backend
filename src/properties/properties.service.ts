@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ParseBoolPipe,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -15,6 +16,10 @@ import { Favorite } from 'src/favorites/entities/favorites.entity';
 import { Booking } from '../booking/entities/bookings.entity';
 import { CreateBookingDto } from 'src/booking/dto/create-booking.dto';
 import { BookingRepository } from '../booking/bookings.repository';
+import { OptionRepository } from '../options/options.repository';
+
+import { Option } from 'src/options/entities/options.entity';
+import { IsVisiblePropertyDto } from './dto/isVisible-property.dto';
 
 @Injectable()
 export class PropertiesService {
@@ -25,6 +30,8 @@ export class PropertiesService {
     private favoriteRepository: FavoriteRepository,
     @InjectRepository(BookingRepository)
     private bookingRepository: BookingRepository,
+    @InjectRepository(OptionRepository)
+    private optionRepository: OptionRepository,
   ) {}
 
   async createProperty(
@@ -36,7 +43,7 @@ export class PropertiesService {
 
   async getPropertiesByUser(user: User): Promise<Property[]> {
     const found = await this.propertyRepository.find({
-      where: { userId: user.id },
+      where: { userId: user.id, isVisible: true },
       relations: ['images'],
     });
     if (!found) {
@@ -47,13 +54,35 @@ export class PropertiesService {
     return found;
   }
 
-  async getAllProperties(
+  async getAllPropertiesVisibles(
     filterDto: GetPropertiesFilterDto,
   ): Promise<Property[]> {
-    return await this.propertyRepository.getAllProperties(filterDto);
+    return await this.propertyRepository.getAllPropertiesVisibles(filterDto);
+  }
+  async getAllPropertiesNotVisibles(): Promise<Property[]> {
+    return await this.propertyRepository.getAllPropertiesNotVisibles();
+  }
+
+  async countAllPropertiesNotVisibles(): Promise<number> {
+    return await this.propertyRepository.count({
+      where: { isVisible: false },
+    });
   }
 
   async getPropertyById(id: number): Promise<Property> {
+    const found = await this.propertyRepository.findOne(id, {
+      where: { isVisible: true },
+      relations: ['images'],
+    });
+    if (!found) {
+      throw new NotFoundException(
+        `L'hébergement avec l'ID ${id} n'existe pas !`,
+      );
+    }
+    return found;
+  }
+
+  async getPropertyByIdNotVisible(id: number): Promise<Property> {
     const found = await this.propertyRepository.findOne(id, {
       relations: ['images'],
     });
@@ -67,7 +96,7 @@ export class PropertiesService {
 
   async getPropertyByIdAndUser(id: number, user: User): Promise<Property> {
     const found = await this.propertyRepository.findOne({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, isVisible: true },
       relations: ['images'],
     });
     if (!found) {
@@ -78,14 +107,13 @@ export class PropertiesService {
     return found;
   }
 
-  // a supprimer ?
-  async updatePropertyCategories(
-    id: number,
-    category: PropertyCategories,
-    user: User,
+  async updatePropertyVisibility(
+    propertyId: number,
+    isVisibleDto: IsVisiblePropertyDto,
   ): Promise<Property> {
-    const property = await this.getPropertyByIdAndUser(id, user);
-    property.category = category;
+    const { isVisible } = isVisibleDto;
+    const property = await this.getPropertyByIdNotVisible(propertyId);
+    property.isVisible = isVisible;
     await property.save();
     return property;
   }
@@ -99,6 +127,7 @@ export class PropertiesService {
       { id, userId: user.id },
       createPropertyDto,
     );
+
     if (updatedProperty.affected === 0) {
       throw new NotFoundException(
         `L'hébergement avec l'ID ${id} n'existe pas !`,
@@ -106,6 +135,13 @@ export class PropertiesService {
     }
   }
 
+  // ********************************************************************************************************************************************************************************************
+  // ********************************************************************************************************************************************************************************************
+  // ********************************************************************************************************************************************************************************************
+  // ********************************************************************************************************************************************************************************************
+  // ********************************************************************************************************************************************************************************************
+  // ********************************************************************************************************************************************************************************************
+  // ********************************************************************************************************************************************************************************************
   async savePropertyFile(property): Promise<any> {
     await this.propertyRepository.save(property);
   }

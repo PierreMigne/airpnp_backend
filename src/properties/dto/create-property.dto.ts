@@ -23,7 +23,7 @@ export class CreatePropertyDto {
   @IsNotEmpty()
   description: string;
 
-  options: string[];
+  options: any;
 
   @IsNotEmpty()
   price: number;

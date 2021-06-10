@@ -23,6 +23,7 @@ export class UserRepository extends Repository<User> {
     user.firstname = firstname;
     user.lastname = lastname;
     user.birthDate = birthDate;
+    user.isAdmin = false;
 
     try {
       await user.save();

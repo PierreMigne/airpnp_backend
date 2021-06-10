@@ -7,6 +7,7 @@ import { AuthModule } from 'src/auth/auth.module';
 import { ImageRepository } from '../images/images.repository';
 import { FavoriteRepository } from '../favorites/favorties.repository';
 import { BookingRepository } from '../booking/bookings.repository';
+import { OptionRepository } from '../options/options.repository';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { BookingRepository } from '../booking/bookings.repository';
       ImageRepository,
       FavoriteRepository,
       BookingRepository,
+      OptionRepository,
     ]),
     AuthModule,
   ],

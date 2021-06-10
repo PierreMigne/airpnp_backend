@@ -36,6 +36,9 @@ export class User extends BaseEntity {
   @Column()
   salt: string;
 
+  @Column()
+  isAdmin: boolean;
+
   @OneToMany(() => Property, (property) => property.user, { eager: true })
   properties: Property[];
 
