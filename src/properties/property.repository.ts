@@ -5,6 +5,8 @@ import { CreatePropertyDto } from './dto/create-property.dto';
 import { GetPropertiesFilterDto } from './dto/get-properties-filter.dto';
 import { User } from '../auth/entities/user.entity';
 import { Option } from 'src/options/entities/options.entity';
+import { PropertyStatusDto } from './dto/property-status.dto';
+import { PropertyStatus } from './property-status.enum';
 
 @EntityRepository(Property)
 export class PropertyRepository extends Repository<Property> {
@@ -54,6 +56,7 @@ export class PropertyRepository extends Repository<Property> {
     const query = this.createQueryBuilder('property');
     query.leftJoinAndSelect('property.images', 'images');
     query.leftJoinAndSelect('property.user', 'user');
+    query.leftJoinAndSelect('property.options', 'options');
     query.orderBy('images.id', 'ASC');
 
     if (filterDto) {
@@ -67,8 +70,8 @@ export class PropertyRepository extends Repository<Property> {
         });
       }
       if (options) {
-        options.forEach((option) => {
-          query.andWhere("property.options ILIKE ('%" + option + "%')");
+        options.forEach((option: string) => {
+          query.andWhere("options ILIKE ('%" + option + "%')");
         });
       }
       if (peoples) {
@@ -82,7 +85,8 @@ export class PropertyRepository extends Repository<Property> {
     filterDto: GetPropertiesFilterDto,
   ): Promise<Property[]> {
     const query = this.getQueryOfAllProperties(filterDto);
-    query.andWhere('(property.isVisible = true)');
+    const status = PropertyStatus.VALIDE;
+    query.andWhere('(property.status = :status)', { status });
     try {
       const properties = await query.getMany();
       return properties;
@@ -99,7 +103,8 @@ export class PropertyRepository extends Repository<Property> {
 
   async getAllPropertiesNotVisibles(): Promise<Property[]> {
     const query = this.getQueryOfAllProperties();
-    query.andWhere('(property.isVisible = false)');
+    const status = PropertyStatus.ATTENTE;
+    query.andWhere('(property.status = :status)', { status });
     try {
       const properties = await query.getMany();
       return properties;
@@ -135,7 +140,7 @@ export class PropertyRepository extends Repository<Property> {
     property.description = description;
     // property.options = options;
     property.price = price;
-    property.isVisible = false;
+    property.status = PropertyStatus.ATTENTE;
     property.createdAt = new Date();
     property.user = user;
 

@@ -19,7 +19,10 @@ import { BookingRepository } from '../booking/bookings.repository';
 import { OptionRepository } from '../options/options.repository';
 
 import { Option } from 'src/options/entities/options.entity';
-import { IsVisiblePropertyDto } from './dto/isVisible-property.dto';
+import { PropertyStatusDto } from './dto/property-status.dto';
+import { PropertyStatus } from './property-status.enum';
+import { UpdatePropertyDto } from './dto/update-property.dto';
+import { In } from 'typeorm';
 
 @Injectable()
 export class PropertiesService {
@@ -43,7 +46,7 @@ export class PropertiesService {
 
   async getPropertiesByUser(user: User): Promise<Property[]> {
     const found = await this.propertyRepository.find({
-      where: { userId: user.id, isVisible: true },
+      where: { userId: user.id },
       relations: ['images'],
     });
     if (!found) {
@@ -63,15 +66,15 @@ export class PropertiesService {
     return await this.propertyRepository.getAllPropertiesNotVisibles();
   }
 
-  async countAllPropertiesNotVisibles(): Promise<number> {
+  async countAllPropertiesWaiting(): Promise<number> {
     return await this.propertyRepository.count({
-      where: { isVisible: false },
+      where: { status: PropertyStatus.ATTENTE },
     });
   }
 
   async getPropertyById(id: number): Promise<Property> {
     const found = await this.propertyRepository.findOne(id, {
-      where: { isVisible: true },
+      where: { status: PropertyStatus.VALIDE },
       relations: ['images'],
     });
     if (!found) {
@@ -96,7 +99,7 @@ export class PropertiesService {
 
   async getPropertyByIdAndUser(id: number, user: User): Promise<Property> {
     const found = await this.propertyRepository.findOne({
-      where: { id, userId: user.id, isVisible: true },
+      where: { id, userId: user.id },
       relations: ['images'],
     });
     if (!found) {
@@ -107,32 +110,107 @@ export class PropertiesService {
     return found;
   }
 
-  async updatePropertyVisibility(
+  async updatePropertyStatus(
     propertyId: number,
-    isVisibleDto: IsVisiblePropertyDto,
+    propertyStatusDto: PropertyStatusDto,
   ): Promise<Property> {
-    const { isVisible } = isVisibleDto;
+    const { status } = propertyStatusDto;
     const property = await this.getPropertyByIdNotVisible(propertyId);
-    property.isVisible = isVisible;
+    property.status = status;
     await property.save();
     return property;
   }
 
+  //on update property.status = PropertyStatus.ATTENTE    a rajouter
+  // async updateProperty(
+  //   id: number,
+  //   user: User,
+  //   createPropertyDto: CreatePropertyDto,
+  // ): Promise<any> {
+  //   const updatedProperty = await this.propertyRepository.update(
+  //     { id, userId: user.id },
+  //     createPropertyDto,
+  //   );
+
+  //   if (updatedProperty.affected === 0) {
+  //     throw new NotFoundException(
+  //       `L'hébergement avec l'ID ${id} n'existe pas !`,
+  //     );
+  //   }
+  // }
+
   async updateProperty(
     id: number,
     user: User,
-    createPropertyDto: CreatePropertyDto,
+    updatePropertyDto: UpdatePropertyDto,
   ): Promise<any> {
-    const updatedProperty = await this.propertyRepository.update(
-      { id, userId: user.id },
-      createPropertyDto,
-    );
+    const {
+      title,
+      category,
+      location,
+      surface,
+      peoples,
+      beds,
+      description,
+      options,
+      price,
+    } = updatePropertyDto;
+    const property = await this.propertyRepository.findOne({
+      where: { id, userId: user.id },
+    });
 
-    if (updatedProperty.affected === 0) {
-      throw new NotFoundException(
-        `L'hébergement avec l'ID ${id} n'existe pas !`,
-      );
+    property.status = PropertyStatus.ATTENTE;
+
+    if (title) {
+      property.title = title;
     }
+    if (category) {
+      property.category = category;
+    }
+    if (location) {
+      property.location = location;
+    }
+    if (surface) {
+      property.surface = surface;
+    }
+    if (peoples) {
+      property.peoples = peoples;
+    }
+    if (beds) {
+      property.beds = beds;
+    }
+    if (description) {
+      property.description = description;
+    }
+    if (price) {
+      property.price = price;
+    }
+
+    const optionArray = [];
+    property.options.forEach((option) => {
+      optionArray.push(option.id);
+    });
+
+    this.removeOptions(optionArray);
+    const optionsArrayWithoutSpaces = options.replace(/ /g, '').split(',');
+    optionsArrayWithoutSpaces.forEach(async (optionItem: any) => {
+      const optionb = new Option();
+      optionb.propertyId = id;
+      optionb.options = optionItem;
+      await optionb.save();
+    });
+
+    property.options = options.option;
+    await property.save();
+
+    return property;
+  }
+  private async removeOptions(ids: string[]) {
+    const entities = await this.optionRepository.findByIds(ids);
+    if (!entities) {
+      throw new NotFoundException(`Aucune option trouvée.`);
+    }
+    return this.optionRepository.remove(entities);
   }
 
   // ********************************************************************************************************************************************************************************************

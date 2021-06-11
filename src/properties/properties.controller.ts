@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   ParseIntPipe,
@@ -16,7 +15,6 @@ import {
   UseInterceptors,
   UploadedFile,
   Res,
-  Req,
 } from '@nestjs/common';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -36,7 +34,9 @@ import { existsSync, mkdirSync, rmdirSync } from 'fs';
 import { Favorite } from '../favorites/entities/favorites.entity';
 import { Booking } from '../booking/entities/bookings.entity';
 import { CreateBookingDto } from 'src/booking/dto/create-booking.dto';
-import { IsVisiblePropertyDto } from './dto/isVisible-property.dto';
+import { PropertyStatusDto } from './dto/property-status.dto';
+import { UpdatePropertyDto } from './dto/update-property.dto';
+import { PropertyStatusValidationPipe } from './pipes/property-status-validation.pipe';
 
 @Controller('properties')
 export class PropertiesController {
@@ -59,9 +59,9 @@ export class PropertiesController {
     return this.propertiesService.getAllPropertiesNotVisibles();
   }
 
-  @Get('all/not-visibles/count')
+  @Get('all/waiting/count')
   countAllPropertiesNotVisibles(): Promise<number> {
-    return this.propertiesService.countAllPropertiesNotVisibles();
+    return this.propertiesService.countAllPropertiesWaiting();
   }
 
   @Get('all/:id')
@@ -127,16 +127,16 @@ export class PropertiesController {
     return this.propertiesService.getPropertyByIdAndUser(propertyId, user);
   }
 
-  @Put(':propertyId/visible')
+  @Put(':propertyId/status')
   @UseGuards(AuthGuard())
-  updatePropertyVisibility(
+  updatePropertyStatus(
     @Param('propertyId', ParseIntPipe) propertyId: number,
-    @Body() isVisibleDto: IsVisiblePropertyDto,
+    @Body() propertyStatusDto: PropertyStatusDto,
     @GetUser() user: User,
   ): Promise<any> {
-    return this.propertiesService.updatePropertyVisibility(
+    return this.propertiesService.updatePropertyStatus(
       propertyId,
-      isVisibleDto,
+      propertyStatusDto,
     );
   }
 
@@ -221,11 +221,11 @@ export class PropertiesController {
   @UseGuards(AuthGuard())
   updateProperty(
     @Param('id', ParseIntPipe) id: number,
-    @Body() createPropertyDto: CreatePropertyDto,
+    @Body() updatePropertyDto: UpdatePropertyDto,
     @GetUser() user: User,
   ): Promise<Property> {
-    this.logger.verbose(`Data: ${JSON.stringify(createPropertyDto)}`);
-    return this.propertiesService.updateProperty(id, user, createPropertyDto);
+    this.logger.verbose(`Data: ${JSON.stringify(updatePropertyDto)}`);
+    return this.propertiesService.updateProperty(id, user, updatePropertyDto);
   }
 
   @Delete(':id')

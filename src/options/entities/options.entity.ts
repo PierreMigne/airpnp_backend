@@ -22,6 +22,7 @@ export class Option extends BaseEntity {
   @ManyToOne(() => Property, (property) => property.options, {
     eager: false,
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   @JoinColumn()
   property: Property;

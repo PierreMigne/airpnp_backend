@@ -12,6 +12,7 @@ import { User } from '../../auth/entities/user.entity';
 import { Image } from '../../images/entities/images.entity';
 import { Favorite } from 'src/favorites/entities/favorites.entity';
 import { Option } from 'src/options/entities/options.entity';
+import { PropertyStatus } from '../property-status.enum';
 
 @Entity()
 export class Property extends BaseEntity {
@@ -40,7 +41,7 @@ export class Property extends BaseEntity {
   description: string;
 
   // @Column('simple-array', { nullable: true })
-  // options: string[];
+  // options: Option[];
 
   @OneToMany(() => Option, (option) => option.property, {
     eager: true,
@@ -55,7 +56,7 @@ export class Property extends BaseEntity {
   createdAt: Date;
 
   @Column()
-  isVisible: boolean;
+  status: PropertyStatus;
 
   @OneToMany(() => Image, (image) => image.property, {
     eager: true,
