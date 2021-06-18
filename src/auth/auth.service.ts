@@ -17,6 +17,7 @@ import { MailService } from '../mail/mail.service';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 import Stripe from 'stripe';
 import * as dotenv from 'dotenv';
+import { UserRoles } from './user-roles.enum';
 
 dotenv.config();
 
@@ -95,12 +96,38 @@ export class AuthService {
     return found;
   }
 
-  async isUserAdmin(user: User): Promise<boolean> {
+  async getAllUsers(): Promise<User[]> {
+    const found = await this.userRepository.find();
+    if (!found) {
+      throw new NotFoundException(`Il n'y a aucun utilisateur !`);
+    }
+    return found;
+  }
+
+  async isUserSuperAdmin(user: User): Promise<boolean> {
     const found = await this.userRepository.findOne({ id: user.id });
     if (!found) {
       throw new NotFoundException(`L'utilisateur ${user} n'existe pas !`);
     }
-    return found.isAdmin;
+
+    if (found.roles === UserRoles.SUPERADMIN) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  async isUserAdminOrSuperAdmin(user: User): Promise<boolean> {
+    const found = await this.userRepository.findOne({ id: user.id });
+    if (!found) {
+      throw new NotFoundException(`L'utilisateur ${user} n'existe pas !`);
+    }
+
+    if (found.roles === UserRoles.USER) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User> {
@@ -113,6 +140,10 @@ export class AuthService {
 
   async updateUser(user: User, editUserDto: EditUserDto): Promise<User> {
     return await this.userRepository.editUser(editUserDto, user);
+  }
+
+  async updateUserRole(userId: number, role: string): Promise<User> {
+    return await this.userRepository.editUserRole(userId, role);
   }
 
   async saveUserFile(user): Promise<any> {
@@ -146,6 +177,12 @@ export class AuthService {
     resetPasswordDto: ResetPasswordDto,
   ): Promise<User> {
     return await this.userRepository.resetPassword(resetPasswordDto, user);
+  }
+
+  async countAllAdmins(): Promise<number> {
+    return await this.userRepository.count({
+      where: { roles: UserRoles.ADMIN },
+    });
   }
 
   // async deleteUser(id: number, user: User): Promise<User[]> {

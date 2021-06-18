@@ -10,6 +10,7 @@ import {
   ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { UserRoles } from './user-roles.enum';
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
@@ -23,7 +24,7 @@ export class UserRepository extends Repository<User> {
     user.firstname = firstname;
     user.lastname = lastname;
     user.birthDate = birthDate;
-    user.isAdmin = false;
+    user.roles = UserRoles.USER;
 
     try {
       await user.save();
@@ -42,6 +43,28 @@ export class UserRepository extends Repository<User> {
     editedUser.firstname = firstname;
     editedUser.lastname = lastname;
     editedUser.birthDate = birthDate;
+
+    await editedUser.save();
+    return editedUser;
+  }
+
+  async editUserRole(userId: number, role: string): Promise<User> {
+    const editedUser = await this.findOne({ id: userId });
+
+    switch (role) {
+      case 'USER':
+        editedUser.roles = UserRoles.USER;
+        break;
+      case 'ADMIN':
+        editedUser.roles = UserRoles.ADMIN;
+        break;
+      case 'SUPERADMIN':
+        editedUser.roles = UserRoles.SUPERADMIN;
+        break;
+      default:
+        editedUser.roles = UserRoles.USER;
+        break;
+    }
 
     await editedUser.save();
     return editedUser;

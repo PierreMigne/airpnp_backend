@@ -50,10 +50,38 @@ export class AuthController {
     return this.authService.getUser(user);
   }
 
+  @Get('all')
+  @UseGuards(AuthGuard())
+  getAllUsers(@GetUser() user: User): Promise<User[]> {
+    return this.authService.getAllUsers();
+  }
+
+  @Put('all/:userId/role')
+  @UseGuards(AuthGuard())
+  updateUserRole(
+    @GetUser() user: User,
+    @Body() role: any,
+    @Param('userId', ParseIntPipe) userId: number,
+  ): Promise<User> {
+    return this.authService.updateUserRole(userId, role.role);
+  }
+
+  @Get('superAdmin')
+  @UseGuards(AuthGuard())
+  isUserSuperAdmin(@GetUser() user: User): Promise<boolean> {
+    return this.authService.isUserSuperAdmin(user);
+  }
+
   @Get('admin')
   @UseGuards(AuthGuard())
   isUserAdmin(@GetUser() user: User): Promise<boolean> {
-    return this.authService.isUserAdmin(user);
+    return this.authService.isUserAdminOrSuperAdmin(user);
+  }
+
+  @Get('admin/count')
+  @UseGuards(AuthGuard())
+  countAllAdmins(@GetUser() user: User): Promise<number> {
+    return this.authService.countAllAdmins();
   }
 
   @Put('profile/edit')

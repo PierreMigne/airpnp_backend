@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { Property } from '../../properties/entities/property.entity';
 import { Image } from '../../images/entities/images.entity';
 import { Favorite } from 'src/favorites/entities/favorites.entity';
+import { UserRoles } from '../user-roles.enum';
 
 @Entity()
 @Unique(['email'])
@@ -37,7 +38,7 @@ export class User extends BaseEntity {
   salt: string;
 
   @Column()
-  isAdmin: boolean;
+  roles: UserRoles;
 
   @OneToMany(() => Property, (property) => property.user, { eager: true })
   properties: Property[];

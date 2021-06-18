@@ -8,6 +8,7 @@ import { ImageRepository } from '../images/images.repository';
 import { FavoriteRepository } from '../favorites/favorties.repository';
 import { BookingRepository } from '../booking/bookings.repository';
 import { OptionRepository } from '../options/options.repository';
+import { MailService } from '../mail/mail.service';
 
 @Module({
   imports: [
@@ -21,6 +22,6 @@ import { OptionRepository } from '../options/options.repository';
     AuthModule,
   ],
   controllers: [PropertiesController],
-  providers: [PropertiesService],
+  providers: [PropertiesService, MailService],
 })
 export class PropertiesModule {}

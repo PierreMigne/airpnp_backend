@@ -23,10 +23,12 @@ import { PropertyStatusDto } from './dto/property-status.dto';
 import { PropertyStatus } from './property-status.enum';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { In } from 'typeorm';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class PropertiesService {
   constructor(
+    private mailService: MailService,
     @InjectRepository(PropertyRepository)
     private propertyRepository: PropertyRepository,
     @InjectRepository(FavoriteRepository)
@@ -75,7 +77,7 @@ export class PropertiesService {
   async getPropertyById(id: number): Promise<Property> {
     const found = await this.propertyRepository.findOne(id, {
       where: { status: PropertyStatus.VALIDE },
-      relations: ['images'],
+      relations: ['images', 'user'],
     });
     if (!found) {
       throw new NotFoundException(
@@ -87,7 +89,7 @@ export class PropertiesService {
 
   async getPropertyByIdNotVisible(id: number): Promise<Property> {
     const found = await this.propertyRepository.findOne(id, {
-      relations: ['images'],
+      relations: ['images', 'user'],
     });
     if (!found) {
       throw new NotFoundException(
@@ -100,7 +102,7 @@ export class PropertiesService {
   async getPropertyByIdAndUser(id: number, user: User): Promise<Property> {
     const found = await this.propertyRepository.findOne({
       where: { id, userId: user.id },
-      relations: ['images'],
+      relations: ['images', 'user'],
     });
     if (!found) {
       throw new NotFoundException(
@@ -114,9 +116,22 @@ export class PropertiesService {
     propertyId: number,
     propertyStatusDto: PropertyStatusDto,
   ): Promise<Property> {
-    const { status } = propertyStatusDto;
+    const { status, reasons } = propertyStatusDto;
     const property = await this.getPropertyByIdNotVisible(propertyId);
     property.status = status;
+
+    if (status === PropertyStatus.VALIDE) {
+      await this.mailService.sendUserValidProperty(
+        property.user.email,
+        property.user.firstname,
+      );
+    } else if (status === PropertyStatus.INVALIDE) {
+      await this.mailService.sendUserInvalidProperty(
+        property.user.email,
+        property.user.firstname,
+        reasons,
+      );
+    }
     await property.save();
     return property;
   }
@@ -220,7 +235,8 @@ export class PropertiesService {
   // ********************************************************************************************************************************************************************************************
   // ********************************************************************************************************************************************************************************************
   // ********************************************************************************************************************************************************************************************
-  async savePropertyFile(property): Promise<any> {
+  async savePropertyFile(property: Property): Promise<any> {
+    property.status = PropertyStatus.ATTENTE;
     await this.propertyRepository.save(property);
   }
 

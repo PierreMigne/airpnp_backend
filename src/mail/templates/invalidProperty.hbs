@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+        body a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            background-color: #1188E6;
+            padding: 10px 30px;
+            border-radius: 9999px;
+        }
+        .subTitle {
+            font-size: 18px;
+        }
+        .linkContainer {
+            margin: 10px 0;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Bonjour {{ name }},</h2>
+    <p class="subTitle">Votre hébergement n'a pas pu être mis en ligne.</p>
+    <p>Nos administrateurs ont refusé de publier votre hébergement pour le(s) motif(s) suivant(s) :</p>
+    <ul>
+        {{#each reasons}}
+            <li>{{this}}</li>
+        {{/each}}
+    </ul>
+    <p>Vous pouvez modifier votre hébergement sur le lien ci-dessous, pour qu'il repasse en validation.</p>
+    <div class="linkContainer">
+        <a href="{{ url }}">Mes hébergements</a>
+    </div>
+    <div>
+        <p> Merci, <br>
+            L'équipe Loc A'Part
+        </p>
+    </div>
+</body>

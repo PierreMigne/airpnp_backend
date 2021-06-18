@@ -37,4 +37,37 @@ export class MailService {
       },
     });
   }
+
+  async sendUserValidProperty(email: string, firstname: string) {
+    const url = this.urlServer + 'my-properties';
+    await this.mailerService.sendMail({
+      to: email,
+      // from: '"Support Team" <support@example.com>', // override default from
+      subject: "Votre hébergement est en ligne sur Loc A'Part !",
+      template: './validProperty', // `.hbs` extension is appended automatically
+      context: {
+        url,
+        name: firstname,
+      },
+    });
+  }
+
+  async sendUserInvalidProperty(
+    email: string,
+    firstname: string,
+    reasons: string[],
+  ) {
+    const url = this.urlServer + 'my-properties';
+    await this.mailerService.sendMail({
+      to: email,
+      // from: '"Support Team" <support@example.com>', // override default from
+      subject: "Problème sur votre hébergement Loc A'Part !",
+      template: './invalidProperty', // `.hbs` extension is appended automatically
+      context: {
+        url,
+        name: firstname,
+        reasons,
+      },
+    });
+  }
 }

@@ -208,6 +208,15 @@ export class PropertiesController {
     };
   }
 
+  @Get('uploads/profile/:id/:imgpath')
+  seeUploadedProfileFile(
+    @Param('imgpath') image,
+    @Res() res,
+    @Param('id') id: number,
+  ) {
+    return res.sendFile(image, { root: './uploads/profile/' + id });
+  }
+
   @Get('uploads/:id/:imgpath')
   seeUploadedFile(
     @Param('imgpath') image,
