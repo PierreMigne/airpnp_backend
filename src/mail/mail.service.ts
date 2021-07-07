@@ -52,11 +52,7 @@ export class MailService {
     });
   }
 
-  async sendUserInvalidProperty(
-    email: string,
-    firstname: string,
-    reasons: string[],
-  ) {
+  async sendUserInvalidProperty(email: string, firstname: string, reasons: string[]) {
     const url = this.urlServer + 'my-properties';
     await this.mailerService.sendMail({
       to: email,

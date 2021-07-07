@@ -11,5 +11,5 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   password: process.env.TYPEORM_PASSWORD,
   database: process.env.TYPEORM_DATABASE,
   autoLoadEntities: true,
-  synchronize: true,
+  synchronize: false,
 };

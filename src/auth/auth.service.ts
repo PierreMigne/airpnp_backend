@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRepository } from './user.repository';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
@@ -17,7 +13,7 @@ import { MailService } from '../mail/mail.service';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 import Stripe from 'stripe';
 import * as dotenv from 'dotenv';
-import { UserRoles } from './user-roles.enum';
+import { UserRole } from './user-role.enum';
 
 dotenv.config();
 
@@ -32,60 +28,56 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2020-08-27',
-    typescript: true,
-  });
+  // stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  //   apiVersion: '2020-08-27',
+  //   typescript: true,
+  // });
 
-  account = this.stripe.accounts.create({
-    type: 'express',
-  });
+  // account = this.stripe.accounts.create({
+  //   type: 'express',
+  // });
 
-  createCustomer = async (email) => {
-    const params: Stripe.CustomerCreateParams = {
-      email: email,
-      name: '',
-      description: 'test customer',
-    };
-    const customer: Stripe.Customer = await this.stripe.customers.create(
-      params,
-    );
-    console.log(customer.id);
-    return customer.id;
-  };
+  // createCustomer = async (email) => {
+  //   const params: Stripe.CustomerCreateParams = {
+  //     email: email,
+  //     name: '',
+  //     description: 'test customer',
+  //   };
+  //   const customer: Stripe.Customer = await this.stripe.customers.create(
+  //     params,
+  //   );
+  //   console.log(customer.id);
+  //   return customer.id;
+  // };
 
-  createAccountLinks = async (customerId) => {
-    const id = customerId;
-    console.log(id);
+  // createAccountLinks = async (customerId) => {
+  //   const id = customerId;
+  //   console.log(id);
 
-    const accountLinks = await this.stripe.accountLinks.create({
-      account: id,
-      refresh_url: 'http://localhost:4200/home',
-      return_url: 'http://localhost:4200/home',
-      type: 'account_onboarding',
-    });
-    console.log(accountLinks);
-  };
+  //   const accountLinks = await this.stripe.accountLinks.create({
+  //     account: id,
+  //     refresh_url: 'http://localhost:4200/home',
+  //     return_url: 'http://localhost:4200/home',
+  //     type: 'account_onboarding',
+  //   });
+  //   console.log(accountLinks);
+  // };
 
   async signUp(authSignUpDto: AuthSignUpDto): Promise<void> {
+    await this.userRepository.signUp(authSignUpDto);
     await this.mailService.sendUserWelcome(authSignUpDto);
-    return await this.userRepository.signUp(authSignUpDto);
   }
 
-  async signIn(
-    authCredentialsDto: AuthCredentialsDto,
-  ): Promise<{ accessToken: string }> {
-    const email = await this.userRepository.validateUserPassword(
-      authCredentialsDto,
-    );
-    if (!email) {
+  async signIn(authCredentialsDto: AuthCredentialsDto): Promise<any> {
+    const user = await this.userRepository.validateUserPassword(authCredentialsDto);
+    if (!user) {
       throw new UnauthorizedException('Email ou mot de passe invalide.');
     }
-    const payload: JwtPayload = { email };
+    const payload: JwtPayload = { email: user.email };
     const accessToken = await this.jwtService.sign(payload);
     // const stripeCustomerId = await this.createCustomer(email);
     // this.createAccountLinks(stripeCustomerId);
-    return { accessToken };
+    return { user, accessToken };
   }
 
   async getUser(user: User): Promise<User> {
@@ -104,30 +96,14 @@ export class AuthService {
     return found;
   }
 
-  async isUserSuperAdmin(user: User): Promise<boolean> {
-    const found = await this.userRepository.findOne({ id: user.id });
+  async getAllUsersAndAdmins(): Promise<User[]> {
+    const found = await this.userRepository.find({
+      where: [{ role: UserRole.USER }, { role: UserRole.ADMIN }],
+    });
     if (!found) {
-      throw new NotFoundException(`L'utilisateur ${user} n'existe pas !`);
+      throw new NotFoundException(`Il n'y a aucun utilisateur !`);
     }
-
-    if (found.roles === UserRoles.SUPERADMIN) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  async isUserAdminOrSuperAdmin(user: User): Promise<boolean> {
-    const found = await this.userRepository.findOne({ id: user.id });
-    if (!found) {
-      throw new NotFoundException(`L'utilisateur ${user} n'existe pas !`);
-    }
-
-    if (found.roles === UserRoles.USER) {
-      return false;
-    } else {
-      return true;
-    }
+    return found;
   }
 
   async getUserByEmail(email: string): Promise<User> {
@@ -153,10 +129,7 @@ export class AuthService {
     await this.imageRepository.delete(userId);
   }
 
-  async editPassword(
-    user: User,
-    editPasswordDto: EditPasswordDto,
-  ): Promise<User> {
+  async editPassword(user: User, editPasswordDto: EditPasswordDto): Promise<User> {
     return await this.userRepository.editPassword(editPasswordDto, user);
   }
 
@@ -172,41 +145,13 @@ export class AuthService {
     return { accessToken };
   }
 
-  async resetPassword(
-    user: User,
-    resetPasswordDto: ResetPasswordDto,
-  ): Promise<User> {
+  async resetPassword(user: User, resetPasswordDto: ResetPasswordDto): Promise<User> {
     return await this.userRepository.resetPassword(resetPasswordDto, user);
   }
 
   async countAllAdmins(): Promise<number> {
     return await this.userRepository.count({
-      where: { roles: UserRoles.ADMIN },
+      where: { role: UserRole.ADMIN },
     });
   }
-
-  // async deleteUser(id: number, user: User): Promise<User[]> {
-  //   const result = await this.userRepository.delete({
-  //     id,
-  //     // userId: user.id,
-  //   });
-
-  //   if (result.affected === 0) {
-  //     throw new NotFoundException(
-  //       `L'utilisateur avec l'ID ${id} n'existe pas !`,
-  //     );
-  //   }
-
-  //   const found = await this.userRepository.find({
-  //     where: { userId: user.id },
-  //     relations: ['image'],
-  //   });
-
-  //   if (!found) {
-  //     throw new NotFoundException(
-  //       `Cet utilisateur n'a pas d'hébergements ou n'existe pas.`,
-  //     );
-  //   }
-  //   return found;
-  // }
 }

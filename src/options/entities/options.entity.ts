@@ -1,11 +1,4 @@
-import {
-  BaseEntity,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Property } from '../../properties/entities/property.entity';
 
 @Entity()

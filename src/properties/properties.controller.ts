@@ -19,8 +19,6 @@ import {
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { Property } from './entities/property.entity';
-import { PropertyCategoriesValidationPipe } from './pipes/property-categories-validation.pipe';
-import { PropertyCategories } from './property-categories.enum';
 import { GetPropertiesFilterDto } from './dto/get-properties-filter.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/auth/get-user.decorator';
@@ -36,20 +34,14 @@ import { Booking } from '../booking/entities/bookings.entity';
 import { CreateBookingDto } from 'src/booking/dto/create-booking.dto';
 import { PropertyStatusDto } from './dto/property-status.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
-import { PropertyStatusValidationPipe } from './pipes/property-status-validation.pipe';
 
 @Controller('properties')
 export class PropertiesController {
   private logger = new Logger('PropertiesController');
-  constructor(
-    private readonly propertiesService: PropertiesService,
-    private propertyRepository: PropertyRepository,
-  ) {}
+  constructor(private readonly propertiesService: PropertiesService, private propertyRepository: PropertyRepository) {}
 
   @Get('all')
-  getAllPropertiesVisibles(
-    @Query(ValidationPipe) filterDto: GetPropertiesFilterDto,
-  ): Promise<Property[]> {
+  getAllPropertiesVisibles(@Query(ValidationPipe) filterDto: GetPropertiesFilterDto): Promise<Property[]> {
     this.logger.verbose(`Filtres: ${JSON.stringify(filterDto)}`);
     return this.propertiesService.getAllPropertiesVisibles(filterDto);
   }
@@ -70,9 +62,7 @@ export class PropertiesController {
   }
 
   @Get('all/:id/not-visible')
-  getPropertyByIdNotVisible(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<Property> {
+  getPropertyByIdNotVisible(@Param('id', ParseIntPipe) id: number): Promise<Property> {
     return this.propertiesService.getPropertyByIdNotVisible(id);
   }
 
@@ -83,10 +73,7 @@ export class PropertiesController {
   @Post()
   @UseGuards(AuthGuard())
   @UsePipes(ValidationPipe)
-  createProperty(
-    @Body() createPropertyDto: CreatePropertyDto,
-    @GetUser() user: User,
-  ): Promise<Property> {
+  createProperty(@Body() createPropertyDto: CreatePropertyDto, @GetUser() user: User): Promise<Property> {
     this.logger.verbose(`Data: ${JSON.stringify(createPropertyDto)}`);
     return this.propertiesService.createProperty(createPropertyDto, user);
   }
@@ -111,10 +98,7 @@ export class PropertiesController {
 
   @Get('bookings/:id')
   @UseGuards(AuthGuard())
-  getBookingsById(
-    @GetUser() user: User,
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<Booking[]> {
+  getBookingsById(@GetUser() user: User, @Param('id', ParseIntPipe) id: number): Promise<Booking[]> {
     return this.propertiesService.getBookingsById(id);
   }
 
@@ -132,12 +116,8 @@ export class PropertiesController {
   updatePropertyStatus(
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() propertyStatusDto: PropertyStatusDto,
-    @GetUser() user: User,
   ): Promise<any> {
-    return this.propertiesService.updatePropertyStatus(
-      propertyId,
-      propertyStatusDto,
-    );
+    return this.propertiesService.updatePropertyStatus(propertyId, propertyStatusDto);
   }
 
   @Post(':propertyId/favorite')
@@ -156,11 +136,7 @@ export class PropertiesController {
     @Body() createBookingDto: CreateBookingDto,
     @GetUser() user: User,
   ): Promise<Booking> {
-    return this.propertiesService.createBooking(
-      propertyId,
-      user,
-      createBookingDto,
-    );
+    return this.propertiesService.createBooking(propertyId, user, createBookingDto);
   }
 
   @Post(':id/uploads')
@@ -177,10 +153,11 @@ export class PropertiesController {
           return cb(null, path);
         },
         filename: (req, file, cb) => {
-          const randomName = Array(32)
+          let randomName = Array(32)
             .fill(null)
             .map(() => Math.round(Math.random() * 16).toString(16))
             .join('');
+          randomName += Date.now();
           return cb(null, `${randomName}${extname(file.originalname)}`);
         },
       }),
@@ -188,13 +165,10 @@ export class PropertiesController {
   )
   async addPropertiesFile(
     @GetUser() user: User,
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const property = await this.propertyRepository.findOne(
-      { id: +id },
-      { relations: ['images'] },
-    );
+    const property = await this.propertyRepository.findOne({ id: id }, { relations: ['images'] });
     const image = new Image();
     image.property = property;
     image.user = null;
@@ -209,20 +183,12 @@ export class PropertiesController {
   }
 
   @Get('uploads/profile/:id/:imgpath')
-  seeUploadedProfileFile(
-    @Param('imgpath') image,
-    @Res() res,
-    @Param('id') id: number,
-  ) {
+  seeUploadedProfileFile(@Param('imgpath') image, @Res() res, @Param('id', ParseIntPipe) id: number) {
     return res.sendFile(image, { root: './uploads/profile/' + id });
   }
 
   @Get('uploads/:id/:imgpath')
-  seeUploadedFile(
-    @Param('imgpath') image,
-    @Res() res,
-    @Param('id') id: number,
-  ) {
+  seeUploadedFile(@Param('imgpath') image, @Res() res, @Param('id', ParseIntPipe) id: number) {
     return res.sendFile(image, { root: './uploads/properties/' + id });
   }
 
@@ -239,10 +205,7 @@ export class PropertiesController {
 
   @Delete(':id')
   @UseGuards(AuthGuard())
-  remove(
-    @Param('id', ParseIntPipe) id: number,
-    @GetUser() user: User,
-  ): Promise<Property[]> {
+  remove(@Param('id', ParseIntPipe) id: number, @GetUser() user: User): Promise<Property[]> {
     const path = './uploads/properties/' + id;
     rmdirSync(path, { recursive: true });
     return this.propertiesService.deleteProperty(id, user);
@@ -250,19 +213,13 @@ export class PropertiesController {
 
   @Delete('favorites/:id')
   @UseGuards(AuthGuard())
-  removeFavorite(
-    @Param('id', ParseIntPipe) id: number,
-    @GetUser() user: User,
-  ): Promise<Favorite[]> {
+  removeFavorite(@Param('id', ParseIntPipe) id: number, @GetUser() user: User): Promise<Favorite[]> {
     return this.propertiesService.deleteFavorites(id, user);
   }
 
   @Delete('favorite/:id')
   @UseGuards(AuthGuard())
-  removeFavoriteByIdAndUser(
-    @Param('id', ParseIntPipe) id: number,
-    @GetUser() user: User,
-  ): Promise<Favorite[]> {
+  removeFavoriteByIdAndUser(@Param('id', ParseIntPipe) id: number, @GetUser() user: User): Promise<Favorite[]> {
     return this.propertiesService.deleteFavoriteByPropertyIdAndUser(id, user);
   }
 }

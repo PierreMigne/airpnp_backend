@@ -1,17 +1,9 @@
-import {
-  BaseEntity,
-  Column,
-  Entity,
-  OneToMany,
-  OneToOne,
-  PrimaryGeneratedColumn,
-  Unique,
-} from 'typeorm';
+import { BaseEntity, Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Property } from '../../properties/entities/property.entity';
 import { Image } from '../../images/entities/images.entity';
 import { Favorite } from 'src/favorites/entities/favorites.entity';
-import { UserRoles } from '../user-roles.enum';
+import { UserRole } from '../user-role.enum';
 
 @Entity()
 @Unique(['email'])
@@ -38,7 +30,7 @@ export class User extends BaseEntity {
   salt: string;
 
   @Column()
-  roles: UserRoles;
+  role: UserRole;
 
   @OneToMany(() => Property, (property) => property.user, { eager: true })
   properties: Property[];

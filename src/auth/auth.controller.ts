@@ -38,9 +38,7 @@ export class AuthController {
   }
 
   @Post('signin')
-  signIn(
-    @Body(ValidationPipe) authCredentialsDto: AuthCredentialsDto,
-  ): Promise<{ accessToken: string }> {
+  signIn(@Body(ValidationPipe) authCredentialsDto: AuthCredentialsDto): Promise<any> {
     return this.authService.signIn(authCredentialsDto);
   }
 
@@ -52,53 +50,37 @@ export class AuthController {
 
   @Get('all')
   @UseGuards(AuthGuard())
-  getAllUsers(@GetUser() user: User): Promise<User[]> {
+  getAllUsers(): Promise<User[]> {
     return this.authService.getAllUsers();
+  }
+
+  @Get('allUsersAndAdmins')
+  @UseGuards(AuthGuard())
+  getAllUsersAndAdmins(): Promise<User[]> {
+    return this.authService.getAllUsersAndAdmins();
   }
 
   @Put('all/:userId/role')
   @UseGuards(AuthGuard())
-  updateUserRole(
-    @GetUser() user: User,
-    @Body() role: any,
-    @Param('userId', ParseIntPipe) userId: number,
-  ): Promise<User> {
+  updateUserRole(@Body() role: any, @Param('userId', ParseIntPipe) userId: number): Promise<User> {
     return this.authService.updateUserRole(userId, role.role);
-  }
-
-  @Get('superAdmin')
-  @UseGuards(AuthGuard())
-  isUserSuperAdmin(@GetUser() user: User): Promise<boolean> {
-    return this.authService.isUserSuperAdmin(user);
-  }
-
-  @Get('admin')
-  @UseGuards(AuthGuard())
-  isUserAdmin(@GetUser() user: User): Promise<boolean> {
-    return this.authService.isUserAdminOrSuperAdmin(user);
   }
 
   @Get('admin/count')
   @UseGuards(AuthGuard())
-  countAllAdmins(@GetUser() user: User): Promise<number> {
+  countAllAdmins(): Promise<number> {
     return this.authService.countAllAdmins();
   }
 
   @Put('profile/edit')
   @UseGuards(AuthGuard())
-  editUser(
-    @Body(ValidationPipe) editUserDto: EditUserDto,
-    @GetUser() user: User,
-  ): Promise<User> {
+  editUser(@Body(ValidationPipe) editUserDto: EditUserDto, @GetUser() user: User): Promise<User> {
     return this.authService.updateUser(user, editUserDto);
   }
 
   @Put('profile/edit/password')
   @UseGuards(AuthGuard())
-  editPassword(
-    @Body(ValidationPipe) editPasswordDto: EditPasswordDto,
-    @GetUser() user: User,
-  ): Promise<User> {
+  editPassword(@Body(ValidationPipe) editPasswordDto: EditPasswordDto, @GetUser() user: User): Promise<User> {
     return this.authService.editPassword(user, editPasswordDto);
   }
 
@@ -151,39 +133,19 @@ export class AuthController {
   }
 
   @Get('profile/uploads/:id/:imgpath')
-  seeUploadedFile(
-    @Param('imgpath') image,
-    @Res() res,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
+  seeUploadedFile(@Param('imgpath') image, @Res() res, @Param('id', ParseIntPipe) id: number) {
     return res.sendFile(image, { root: './uploads/profile/' + id });
   }
 
   @Post('forgot')
-  forgotPassword(
-    @Body(ValidationPipe) email: JwtPayload,
-  ): Promise<{ accessToken: string }> {
+  forgotPassword(@Body(ValidationPipe) email: JwtPayload): Promise<{ accessToken: string }> {
     const accessToken = this.authService.forgotPassword(email);
     return accessToken;
   }
 
   @Put('profile/reset/password')
   @UseGuards(AuthGuard())
-  resetPassword(
-    @Body(ValidationPipe) resetPasswordDto: ResetPasswordDto,
-    @GetUser() user: User,
-  ): Promise<User> {
+  resetPassword(@Body(ValidationPipe) resetPasswordDto: ResetPasswordDto, @GetUser() user: User): Promise<User> {
     return this.authService.resetPassword(user, resetPasswordDto);
   }
-
-  // @Delete(':id')
-  // @UseGuards(AuthGuard())
-  // remove(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @GetUser() user: User,
-  // ): Promise<User[]> {
-  //   const path = './uploads/profile/' + id;
-  //   rmdirSync(path, { recursive: true });
-  //   return this.authService.deleteUser(+id, user);
-  // }
 }

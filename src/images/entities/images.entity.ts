@@ -1,14 +1,6 @@
 import { Property } from 'src/properties/entities/property.entity';
 import { User } from '../../auth/entities/user.entity';
-import {
-  BaseEntity,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Image extends BaseEntity {

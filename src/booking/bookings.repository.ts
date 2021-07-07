@@ -8,11 +8,7 @@ import { Logger, InternalServerErrorException } from '@nestjs/common';
 export class BookingRepository extends Repository<Booking> {
   private logger = new Logger('BookingRepository');
 
-  async createBooking(
-    createBookingDto: CreateBookingDto,
-    user: User,
-    propertyId: number,
-  ): Promise<Booking> {
+  async createBooking(createBookingDto: CreateBookingDto, user: User, propertyId: number): Promise<Booking> {
     const { startDate, endDate, price, peoples } = createBookingDto;
     const booking = new Booking();
     booking.startDate = startDate;
@@ -26,10 +22,7 @@ export class BookingRepository extends Repository<Booking> {
     try {
       await booking.save();
     } catch (error) {
-      this.logger.error(
-        `Data: ${JSON.stringify(createBookingDto)}`,
-        error.stack,
-      );
+      this.logger.error(`Data: ${JSON.stringify(createBookingDto)}`, error.stack);
       throw new InternalServerErrorException();
     }
 

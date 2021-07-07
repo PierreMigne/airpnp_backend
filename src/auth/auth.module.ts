@@ -21,12 +21,7 @@ dotenv.config();
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: 86400 }, // 86400 => 24 hours
     }),
-    TypeOrmModule.forFeature([
-      UserRepository,
-      ImageRepository,
-      FavoriteRepository,
-      BookingRepository,
-    ]),
+    TypeOrmModule.forFeature([UserRepository, ImageRepository, FavoriteRepository, BookingRepository]),
     MailModule,
   ],
   controllers: [AuthController],

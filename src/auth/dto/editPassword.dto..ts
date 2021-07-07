@@ -9,8 +9,7 @@ export class EditPasswordDto {
     message: 'Votre mot de passe doit contenir au maximum 20 caractères.',
   })
   @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-    message:
-      'Votre mot de passe doit contenir au minimum 1 Majuscule, 1 Minuscule et 1 Chiffre ou caractère spécial.',
+    message: 'Votre mot de passe doit contenir au minimum 1 Majuscule, 1 Minuscule et 1 Chiffre ou caractère spécial.',
   })
   oldPassword: string;
 
@@ -22,8 +21,7 @@ export class EditPasswordDto {
     message: 'Votre mot de passe doit contenir au maximum 20 caractères.',
   })
   @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-    message:
-      'Votre mot de passe doit contenir au minimum 1 Majuscule, 1 Minuscule et 1 Chiffre ou caractère spécial.',
+    message: 'Votre mot de passe doit contenir au minimum 1 Majuscule, 1 Minuscule et 1 Chiffre ou caractère spécial.',
   })
   password: string;
 }

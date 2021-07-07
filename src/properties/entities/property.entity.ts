@@ -1,12 +1,4 @@
-import {
-  BaseEntity,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { BaseEntity, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { PropertyCategories } from '../property-categories.enum';
 import { User } from '../../auth/entities/user.entity';
 import { Image } from '../../images/entities/images.entity';
@@ -39,9 +31,6 @@ export class Property extends BaseEntity {
 
   @Column()
   description: string;
-
-  // @Column('simple-array', { nullable: true })
-  // options: Option[];
 
   @OneToMany(() => Option, (option) => option.property, {
     eager: true,

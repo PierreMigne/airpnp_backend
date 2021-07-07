@@ -1,14 +1,8 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-  ParseBoolPipe,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { GetPropertiesFilterDto } from './dto/get-properties-filter.dto';
 import { Property } from './entities/property.entity';
-import { PropertyCategories } from './property-categories.enum';
 import { PropertyRepository } from './property.repository';
 import { User } from '../auth/entities/user.entity';
 import { FavoriteRepository } from '../favorites/favorties.repository';
@@ -22,8 +16,8 @@ import { Option } from 'src/options/entities/options.entity';
 import { PropertyStatusDto } from './dto/property-status.dto';
 import { PropertyStatus } from './property-status.enum';
 import { UpdatePropertyDto } from './dto/update-property.dto';
-import { In } from 'typeorm';
 import { MailService } from '../mail/mail.service';
+import * as _ from 'lodash';
 
 @Injectable()
 export class PropertiesService {
@@ -39,29 +33,15 @@ export class PropertiesService {
     private optionRepository: OptionRepository,
   ) {}
 
-  async createProperty(
-    createPropertyDto: CreatePropertyDto,
-    user: User,
-  ): Promise<Property> {
+  async createProperty(createPropertyDto: CreatePropertyDto, user: User): Promise<Property> {
     return this.propertyRepository.createProperty(createPropertyDto, user);
   }
 
   async getPropertiesByUser(user: User): Promise<Property[]> {
-    const found = await this.propertyRepository.find({
-      where: { userId: user.id },
-      relations: ['images'],
-    });
-    if (!found) {
-      throw new NotFoundException(
-        `Cet utilisateur n'a pas d'hébergements ou n'existe pas.`,
-      );
-    }
-    return found;
+    return await this.propertyRepository.getPropertiesByUser(user);
   }
 
-  async getAllPropertiesVisibles(
-    filterDto: GetPropertiesFilterDto,
-  ): Promise<Property[]> {
+  async getAllPropertiesVisibles(filterDto: GetPropertiesFilterDto): Promise<Property[]> {
     return await this.propertyRepository.getAllPropertiesVisibles(filterDto);
   }
   async getAllPropertiesNotVisibles(): Promise<Property[]> {
@@ -80,9 +60,7 @@ export class PropertiesService {
       relations: ['images', 'user'],
     });
     if (!found) {
-      throw new NotFoundException(
-        `L'hébergement avec l'ID ${id} n'existe pas !`,
-      );
+      throw new NotFoundException(`L'hébergement avec l'ID ${id} n'existe pas !`);
     }
     return found;
   }
@@ -92,87 +70,38 @@ export class PropertiesService {
       relations: ['images', 'user'],
     });
     if (!found) {
-      throw new NotFoundException(
-        `L'hébergement avec l'ID ${id} n'existe pas !`,
-      );
+      throw new NotFoundException(`L'hébergement avec l'ID ${id} n'existe pas !`);
     }
     return found;
   }
 
   async getPropertyByIdAndUser(id: number, user: User): Promise<Property> {
-    const found = await this.propertyRepository.findOne({
-      where: { id, userId: user.id },
-      relations: ['images', 'user'],
-    });
-    if (!found) {
-      throw new NotFoundException(
-        `L'hébergement avec l'ID ${id} n'existe pas !`,
-      );
-    }
-    return found;
+    return await this.propertyRepository.getPropertyByIdAndUser(id, user);
   }
 
-  async updatePropertyStatus(
-    propertyId: number,
-    propertyStatusDto: PropertyStatusDto,
-  ): Promise<Property> {
+  async updatePropertyStatus(propertyId: number, propertyStatusDto: PropertyStatusDto): Promise<Property> {
     const { status, reasons } = propertyStatusDto;
     const property = await this.getPropertyByIdNotVisible(propertyId);
     property.status = status;
 
     if (status === PropertyStatus.VALIDE) {
-      await this.mailService.sendUserValidProperty(
-        property.user.email,
-        property.user.firstname,
-      );
+      await this.mailService.sendUserValidProperty(property.user.email, property.user.firstname);
     } else if (status === PropertyStatus.INVALIDE) {
-      await this.mailService.sendUserInvalidProperty(
-        property.user.email,
-        property.user.firstname,
-        reasons,
-      );
+      await this.mailService.sendUserInvalidProperty(property.user.email, property.user.firstname, reasons);
     }
     await property.save();
     return property;
   }
 
-  //on update property.status = PropertyStatus.ATTENTE    a rajouter
-  // async updateProperty(
-  //   id: number,
-  //   user: User,
-  //   createPropertyDto: CreatePropertyDto,
-  // ): Promise<any> {
-  //   const updatedProperty = await this.propertyRepository.update(
-  //     { id, userId: user.id },
-  //     createPropertyDto,
-  //   );
-
-  //   if (updatedProperty.affected === 0) {
-  //     throw new NotFoundException(
-  //       `L'hébergement avec l'ID ${id} n'existe pas !`,
-  //     );
-  //   }
-  // }
-
-  async updateProperty(
-    id: number,
-    user: User,
-    updatePropertyDto: UpdatePropertyDto,
-  ): Promise<any> {
-    const {
-      title,
-      category,
-      location,
-      surface,
-      peoples,
-      beds,
-      description,
-      options,
-      price,
-    } = updatePropertyDto;
+  async updateProperty(id: number, user: User, updatePropertyDto: UpdatePropertyDto): Promise<any> {
+    const { title, category, location, surface, peoples, beds, description, options, price } = updatePropertyDto;
     const property = await this.propertyRepository.findOne({
       where: { id, userId: user.id },
     });
+
+    if (!property) {
+      throw new NotFoundException(`L'hébergement avec l'ID ${id} n'existe pas !`);
+    }
 
     property.status = PropertyStatus.ATTENTE;
 
@@ -228,13 +157,6 @@ export class PropertiesService {
     return this.optionRepository.remove(entities);
   }
 
-  // ********************************************************************************************************************************************************************************************
-  // ********************************************************************************************************************************************************************************************
-  // ********************************************************************************************************************************************************************************************
-  // ********************************************************************************************************************************************************************************************
-  // ********************************************************************************************************************************************************************************************
-  // ********************************************************************************************************************************************************************************************
-  // ********************************************************************************************************************************************************************************************
   async savePropertyFile(property: Property): Promise<any> {
     property.status = PropertyStatus.ATTENTE;
     await this.propertyRepository.save(property);
@@ -247,9 +169,7 @@ export class PropertiesService {
     });
 
     if (result.affected === 0) {
-      throw new NotFoundException(
-        `L'hébergement avec l'ID ${id} n'existe pas !`,
-      );
+      throw new NotFoundException(`L'hébergement avec l'ID ${id} n'existe pas !`);
     }
 
     const found = await this.propertyRepository.find({
@@ -258,17 +178,12 @@ export class PropertiesService {
     });
 
     if (!found) {
-      throw new NotFoundException(
-        `Cet utilisateur n'a pas d'hébergements ou n'existe pas.`,
-      );
+      throw new NotFoundException(`Cet utilisateur n'a pas d'hébergements ou n'existe pas.`);
     }
     return found;
   }
 
-  async savePropertyInFavorite(
-    propertyId: number,
-    user: User,
-  ): Promise<Favorite> {
+  async savePropertyInFavorite(propertyId: number, user: User): Promise<Favorite> {
     try {
       return await this.favoriteRepository.save({
         property: { id: propertyId },
@@ -279,17 +194,9 @@ export class PropertiesService {
     }
   }
 
-  async createBooking(
-    propertyId: number,
-    user: User,
-    createBookingDto: CreateBookingDto,
-  ): Promise<Booking> {
+  async createBooking(propertyId: number, user: User, createBookingDto: CreateBookingDto): Promise<Booking> {
     try {
-      return await this.bookingRepository.createBooking(
-        createBookingDto,
-        user,
-        propertyId,
-      );
+      return await this.bookingRepository.createBooking(createBookingDto, user, propertyId);
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -332,10 +239,7 @@ export class PropertiesService {
     return found;
   }
 
-  async deleteFavoriteByPropertyIdAndUser(
-    propertyId: number,
-    user: User,
-  ): Promise<any> {
+  async deleteFavoriteByPropertyIdAndUser(propertyId: number, user: User): Promise<any> {
     const result = await this.favoriteRepository.delete({
       user: { id: user.id },
       property: { id: propertyId },

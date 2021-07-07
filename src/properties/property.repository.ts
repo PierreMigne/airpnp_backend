@@ -5,7 +5,6 @@ import { CreatePropertyDto } from './dto/create-property.dto';
 import { GetPropertiesFilterDto } from './dto/get-properties-filter.dto';
 import { User } from '../auth/entities/user.entity';
 import { Option } from 'src/options/entities/options.entity';
-import { PropertyStatusDto } from './dto/property-status.dto';
 import { PropertyStatus } from './property-status.enum';
 
 @EntityRepository(Property)
@@ -13,77 +12,7 @@ export class PropertyRepository extends Repository<Property> {
   private logger = new Logger('PropertyRepository');
   private entityManager = getManager();
 
-  // async getAllProperties(
-  //   filterDto: GetPropertiesFilterDto,
-  // ): Promise<Property[]> {
-  //   const { category, location, peoples, options } = filterDto;
-  //   const query = this.createQueryBuilder('property');
-  //   query.leftJoinAndSelect('property.images', 'images');
-  //   query.orderBy('images.id', 'ASC');
-
-  //   if (category) {
-  //     query.andWhere('property.category IN (:...category)', { category });
-  //   }
-  //   if (location) {
-  //     query.andWhere('property.location ILIKE (:location)', {
-  //       location: `%${location}%`,
-  //     });
-  //   }
-  //   if (options) {
-  //     options.forEach((option) => {
-  //       query.andWhere("property.options ILIKE ('%" + option + "%')");
-  //     });
-  //   }
-  //   if (peoples) {
-  //     query.andWhere('(property.peoples = :peoples)', { peoples });
-  //   }
-  //   query.andWhere('(property.isVisible = true)');
-
-  //   try {
-  //     const properties = await query.getMany();
-  //     return properties;
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Impossible de trouver d'hébergements. Filtres: ${JSON.stringify(
-  //         filterDto,
-  //       )}`,
-  //       error.stack,
-  //     );
-  //     throw new InternalServerErrorException();
-  //   }
-  // }
-
-  private queryOption(options) {
-    const queryOption = this.entityManager.createQueryBuilder(
-      Option,
-      'options',
-    );
-    queryOption.select();
-    queryOption.where('options.options IN (:options)', { options });
-
-    const queryPropertyOption = this.entityManager.createQueryBuilder(
-      Property,
-      'property',
-    );
-    queryPropertyOption.where((qb) => {
-      const subQuery = qb
-        .subQuery()
-        .select('property.id')
-        .from(Property, 'property')
-        .innerJoinAndSelect(
-          '(' + queryOption.getQuery() + ')',
-          'qOption',
-          'qOption.propertyId = property.id',
-        )
-        .getQuery();
-      return subQuery;
-    });
-  }
-
-  // QueryPropertyOption : SELECT id FROM property INNER JOIN {{QueryOption}} ON options.propertyId = property.id
-
   private async getQueryOfAllProperties(filterDto?: GetPropertiesFilterDto) {
-    // const query = this.createQueryBuilder('property');
     const query = this.createQueryBuilder('property');
     query.leftJoinAndSelect('property.images', 'images');
     query.leftJoinAndSelect('property.user', 'user');
@@ -103,49 +32,31 @@ export class PropertyRepository extends Repository<Property> {
       if (peoples) {
         query.andWhere('(property.peoples = :peoples)', { peoples });
       }
-      // if (options) {
-      //   options.forEach((option: string) => {
-      //     query.andWhere("listoptions.options ILIKE ('%" + option + "%')");
-      //   });
-      // }
       if (options) {
-        const queryOption = await this
-          .createQueryBuilder('option')
-          .select()
-          .from(Option, 'optionFrom')
-          .where('option.options IN (optionsArr)', { optionsArr: options });
-        // queryOption.from(Option, 'option');
-
-        const queryPropertyOption = await this.entityManager.createQueryBuilder(
-          Property,
-          'property',
-        );
-        queryPropertyOption.where((qb) => {
-          const subQuery = qb
-            .subQuery()
-            .select('property.id')
-            .from(Property, 'property')
-            .innerJoinAndSelect(
-              '(' + queryOption.getQuery() + ')',
-              'qOption',
-              'qOption.propertyId = property.id',
-            )
-            .getQuery();
-          return subQuery;
+        // Return Properties who have valid Options
+        let optionsQuery = `SELECT "propertyId" FROM "option" GROUP BY "propertyId" HAVING `;
+        options.forEach((option: string, index: number) => {
+          // Concat all options for each property
+          optionsQuery += `array_to_string(array_agg("options"), ',') ILIKE ('%` + option + `%')`;
+          if (index != options.length - 1) {
+            optionsQuery += ` AND `;
+          }
         });
-        
-        query.andWhere(
-          'property.id IN (' + queryPropertyOption.getRawMany() + ')',
-        );
-        console.log(query.getQueryAndParameters());
+        const optionsResult = await this.entityManager.query(optionsQuery);
+
+        if (optionsResult && optionsResult.length > 0) {
+          const propertyIds = optionsResult.map((option) => +option.propertyId);
+          // Return only valid Properties
+          query.andWhere('property.id IN (:...ids)', { ids: propertyIds });
+        } else {
+          query.andWhere('false');
+        }
       }
     }
     return query;
   }
 
-  async getAllPropertiesVisibles(
-    filterDto: GetPropertiesFilterDto,
-  ): Promise<Property[]> {
+  async getAllPropertiesVisibles(filterDto: GetPropertiesFilterDto): Promise<Property[]> {
     const query = await this.getQueryOfAllProperties(filterDto);
     const status = PropertyStatus.VALIDE;
     query.andWhere('(property.status = :status)', { status });
@@ -153,12 +64,7 @@ export class PropertyRepository extends Repository<Property> {
       const properties = await query.getMany();
       return properties;
     } catch (error) {
-      this.logger.error(
-        `Impossible de trouver d'hébergements. Filtres: ${JSON.stringify(
-          filterDto,
-        )}`,
-        error.stack,
-      );
+      this.logger.error(`Impossible de trouver d'hébergements. Filtres: ${JSON.stringify(filterDto)}`, error.stack);
       throw new InternalServerErrorException();
     }
   }
@@ -176,21 +82,8 @@ export class PropertyRepository extends Repository<Property> {
     }
   }
 
-  async createProperty(
-    createPropertyDto: CreatePropertyDto,
-    user: User,
-  ): Promise<Property> {
-    const {
-      title,
-      category,
-      location,
-      surface,
-      peoples,
-      beds,
-      description,
-      options,
-      price,
-    } = createPropertyDto;
+  async createProperty(createPropertyDto: CreatePropertyDto, user: User): Promise<Property> {
+    const { title, category, location, surface, peoples, beds, description, options, price } = createPropertyDto;
 
     const property = new Property();
     property.title = title;
@@ -218,14 +111,49 @@ export class PropertyRepository extends Repository<Property> {
         await option.save();
       });
     } catch (error) {
-      this.logger.error(
-        `Data: ${JSON.stringify(createPropertyDto)}`,
-        error.stack,
-      );
+      this.logger.error(`Data: ${JSON.stringify(createPropertyDto)}`, error.stack);
       throw new InternalServerErrorException();
     }
 
     delete property.user;
     return property;
+  }
+
+  async getPropertiesByUser(user: User) {
+    const query = this.createQueryBuilder('property');
+    query.leftJoinAndSelect('property.images', 'images');
+    query.leftJoinAndSelect('property.user', 'user');
+    query.leftJoinAndSelect('property.options', 'listoptions');
+    query.orderBy('images.id', 'ASC');
+
+    query.where('property.userId = :userId', { userId: user.id });
+    // return query;
+
+    try {
+      const properties = await query.getMany();
+      return properties;
+    } catch (error) {
+      this.logger.error(`Impossible de trouver d'hébergements.`, error.stack);
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async getPropertyByIdAndUser(id: number, user: User) {
+    const query = this.createQueryBuilder('property');
+    query.leftJoinAndSelect('property.images', 'images');
+    query.leftJoinAndSelect('property.user', 'user');
+    query.leftJoinAndSelect('property.options', 'listoptions');
+    query.orderBy('images.id', 'ASC');
+
+    query.where('property.id = :id', { id: id });
+    query.andWhere('property.userId = :userId', { userId: user.id });
+
+    try {
+      const properties = await query.getOne();
+      return properties;
+    } catch (error) {
+      this.logger.error(`Impossible de trouver d'hébergement avec l'ID ${id}.`, error.stack);
+      throw new InternalServerErrorException();
+    }
   }
 }
