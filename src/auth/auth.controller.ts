@@ -66,6 +66,18 @@ export class AuthController {
     return this.authService.updateUserRole(userId, role.role);
   }
 
+  @Get('superAdmin')
+  @UseGuards(AuthGuard())
+  isUserSuperAdmin(@GetUser() user: User): Promise<boolean> {
+    return this.authService.isUserSuperAdmin(user);
+  }
+
+  @Get('admin')
+  @UseGuards(AuthGuard())
+  isUserAdmin(@GetUser() user: User): Promise<boolean> {
+    return this.authService.isUserAdminOrSuperAdmin(user);
+  }
+
   @Get('admin/count')
   @UseGuards(AuthGuard())
   countAllAdmins(): Promise<number> {

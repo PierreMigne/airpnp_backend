@@ -154,4 +154,28 @@ export class AuthService {
       where: { role: UserRole.ADMIN },
     });
   }
+  async isUserAdminOrSuperAdmin(user: User): Promise<boolean> {
+    const found = await this.userRepository.findOne({ id: user.id });
+    if (!found) {
+      throw new NotFoundException(`L'utilisateur ${user} n'existe pas !`);
+    }
+    if (found.role === UserRole.USER) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  async isUserSuperAdmin(user: User): Promise<boolean> {
+    const found = await this.userRepository.findOne({ id: user.id });
+    if (!found) {
+      throw new NotFoundException(`L'utilisateur ${user} n'existe pas !`);
+    }
+
+    if (found.role === UserRole.SUPERADMIN) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
